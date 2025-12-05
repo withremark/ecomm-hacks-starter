@@ -1,0 +1,362 @@
+"""Gemini API service using google-genai SDK."""
+
+import base64
+import logging
+import os
+from dataclasses import dataclass, field
+from typing import Any
+
+from google import genai
+from google.genai import types
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class GeminiResult:
+    """Gemini response with metadata."""
+
+    text: str
+    model: str
+    usage: dict[str, Any] | None = None
+
+
+@dataclass
+class ImageResult:
+    """Image generation result."""
+
+    text: str | None  # Any accompanying text
+    images: list[dict[str, Any]] = field(default_factory=list)  # List of {data: base64, mime_type: str}
+    model: str = ""
+    usage: dict[str, Any] | None = None
+
+
+class GeminiService:
+    """Service for interacting with Google Gemini API."""
+
+    # Available image models
+    IMAGE_MODELS = {
+        "nano-banana": "gemini-2.5-flash-image",  # Nano Banana (Gemini 2.5 Flash Image)
+        "nano-banana-pro": "gemini-3-pro-image-preview",  # Nano Banana Pro (Gemini 3 Pro Image)
+        "gemini-2.5-flash-image": "gemini-2.5-flash-image",
+        "gemini-3-pro-image-preview": "gemini-3-pro-image-preview",
+        "gemini-2.0-flash-exp": "gemini-2.0-flash-exp",  # Legacy
+    }
+
+    def __init__(self, api_key: str | None = None, default_model: str = "gemini-2.5-flash"):
+        """Initialize the Gemini service.
+
+        Args:
+            api_key: Gemini API key. Falls back to GEMINI_API_KEY env var.
+            default_model: Default model to use for queries.
+        """
+        self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
+        if not self.api_key:
+            raise ValueError("GEMINI_API_KEY not provided and not found in environment")
+
+        self.default_model = default_model
+        self.client = genai.Client(api_key=self.api_key)
+
+    async def query(
+        self,
+        prompt: str,
+        model: str | None = None,
+        system_instruction: str | None = None,
+    ) -> GeminiResult:
+        """Query Gemini asynchronously.
+
+        Args:
+            prompt: User prompt to send
+            model: Model to use (defaults to self.default_model)
+            system_instruction: Optional system prompt
+
+        Returns:
+            GeminiResult with response text and metadata
+        """
+        model_name = model or self.default_model
+
+        config = {}
+        if system_instruction:
+            config["system_instruction"] = system_instruction
+
+        response = await self.client.aio.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=config if config else None,
+        )
+
+        # Extract usage info if available
+        usage = None
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = {
+                "prompt_tokens": getattr(response.usage_metadata, "prompt_token_count", None),
+                "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
+                "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
+            }
+
+        return GeminiResult(
+            text=response.text,
+            model=model_name,
+            usage=usage,
+        )
+
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        model: str | None = None,
+        system_instruction: str | None = None,
+    ) -> GeminiResult:
+        """Multi-turn chat with history.
+
+        Args:
+            messages: List of {"role": "user"|"assistant", "content": str}
+            model: Model to use
+            system_instruction: Optional system prompt
+
+        Returns:
+            GeminiResult with assistant response
+        """
+        model_name = model or self.default_model
+
+        # Convert messages to Gemini format using types.Content
+        contents = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            # Gemini uses "model" instead of "assistant"
+            if role == "assistant":
+                role = "model"
+            contents.append(
+                types.Content(
+                    role=role,
+                    parts=[types.Part.from_text(text=msg["content"])],
+                )
+            )
+
+        # Build config
+        config = None
+        if system_instruction:
+            config = types.GenerateContentConfig(system_instruction=system_instruction)
+
+        response = await self.client.aio.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config=config,
+        )
+
+        usage = None
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = {
+                "prompt_tokens": getattr(response.usage_metadata, "prompt_token_count", None),
+                "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
+                "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
+            }
+
+        return GeminiResult(
+            text=response.text,
+            model=model_name,
+            usage=usage,
+        )
+
+    async def generate_image(
+        self,
+        prompt: str,
+        model: str = "gemini-2.5-flash-image",
+        aspect_ratio: str | None = None,
+        num_images: int = 1,
+    ) -> ImageResult:
+        """Generate images using Nano Banana (Gemini image models).
+
+        Args:
+            prompt: Text description of the image to generate
+            model: Model to use (default: gemini-2.0-flash-exp)
+            aspect_ratio: Optional aspect ratio (e.g., "1:1", "16:9", "9:16")
+            num_images: Number of images to generate (1-4)
+
+        Returns:
+            ImageResult with generated images as base64
+        """
+        # Resolve model alias
+        model_name = self.IMAGE_MODELS.get(model, model)
+
+        # Build config with image generation enabled
+        config = types.GenerateContentConfig(
+            response_modalities=["TEXT", "IMAGE"],
+        )
+
+        response = await self.client.aio.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=config,
+        )
+
+        # Extract text and images from response
+        text = None
+        images = []
+
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        # Check for text content
+                        if hasattr(part, "text") and part.text:
+                            text = part.text
+                        # Check for image content - look for inline_data with actual data
+                        if hasattr(part, "inline_data") and part.inline_data:
+                            inline = part.inline_data
+                            if hasattr(inline, "data") and inline.data:
+                                images.append({
+                                    "data": base64.b64encode(inline.data).decode("utf-8"),
+                                    "mime_type": getattr(inline, "mime_type", "image/png"),
+                                })
+
+        usage = None
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = {
+                "prompt_tokens": getattr(response.usage_metadata, "prompt_token_count", None),
+                "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
+                "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
+            }
+
+        return ImageResult(
+            text=text,
+            images=images,
+            model=model_name,
+            usage=usage,
+        )
+
+    async def edit_image(
+        self,
+        prompt: str,
+        image_data: bytes,
+        image_mime_type: str = "image/png",
+        model: str = "gemini-2.5-flash-image",
+    ) -> ImageResult:
+        """Edit an existing image using Nano Banana.
+
+        Args:
+            prompt: Instructions for how to edit the image
+            image_data: Raw image bytes
+            image_mime_type: MIME type of the image
+            model: Model to use
+
+        Returns:
+            ImageResult with edited image
+        """
+        model_name = self.IMAGE_MODELS.get(model, model)
+
+        # Build content with both text and image
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_text(text=prompt),
+                    types.Part.from_bytes(data=image_data, mime_type=image_mime_type),
+                ],
+            )
+        ]
+
+        config = types.GenerateContentConfig(
+            response_modalities=["TEXT", "IMAGE"],
+        )
+
+        response = await self.client.aio.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config=config,
+        )
+
+        # Extract results
+        text = None
+        images = []
+
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if hasattr(part, "text") and part.text:
+                            text = part.text
+                        if hasattr(part, "inline_data") and part.inline_data:
+                            inline = part.inline_data
+                            if hasattr(inline, "data") and inline.data:
+                                images.append({
+                                    "data": base64.b64encode(inline.data).decode("utf-8"),
+                                    "mime_type": getattr(inline, "mime_type", "image/png"),
+                                })
+
+        usage = None
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = {
+                "prompt_tokens": getattr(response.usage_metadata, "prompt_token_count", None),
+                "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
+                "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
+            }
+
+        return ImageResult(
+            text=text,
+            images=images,
+            model=model_name,
+            usage=usage,
+        )
+
+    def query_sync(
+        self,
+        prompt: str,
+        model: str | None = None,
+        system_instruction: str | None = None,
+    ) -> GeminiResult:
+        """Synchronous query (for non-async contexts).
+
+        Args:
+            prompt: User prompt to send
+            model: Model to use
+            system_instruction: Optional system prompt
+
+        Returns:
+            GeminiResult with response text and metadata
+        """
+        model_name = model or self.default_model
+
+        config = {}
+        if system_instruction:
+            config["system_instruction"] = system_instruction
+
+        response = self.client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=config if config else None,
+        )
+
+        usage = None
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = {
+                "prompt_tokens": getattr(response.usage_metadata, "prompt_token_count", None),
+                "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
+                "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
+            }
+
+        return GeminiResult(
+            text=response.text,
+            model=model_name,
+            usage=usage,
+        )
+
+
+# Convenience function for quick queries
+async def query_gemini(
+    prompt: str,
+    model: str = "gemini-2.0-flash",
+    system_instruction: str | None = None,
+) -> str:
+    """Quick async query to Gemini.
+
+    Args:
+        prompt: User prompt
+        model: Model to use
+        system_instruction: Optional system prompt
+
+    Returns:
+        Response text
+    """
+    service = GeminiService(default_model=model)
+    result = await service.query(prompt, system_instruction=system_instruction)
+    return result.text
