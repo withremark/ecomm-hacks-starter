@@ -5,7 +5,7 @@ import os
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
+from app.main import app, lifespan
 
 
 @pytest.fixture
@@ -16,12 +16,13 @@ def anyio_backend():
 
 @pytest.fixture
 async def client():
-    """Create an async test client for the FastAPI app."""
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test",
-    ) as ac:
-        yield ac
+    """Create an async test client for the FastAPI app with lifespan."""
+    async with lifespan(app):
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+        ) as ac:
+            yield ac
 
 
 @pytest.fixture

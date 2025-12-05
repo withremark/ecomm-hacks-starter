@@ -31,6 +31,16 @@ class ImageResult:
     usage: dict[str, Any] | None = None
 
 
+@dataclass
+class MediaResult:
+    """Multi-media query result."""
+
+    text: str | None = None
+    images: list[dict[str, Any]] = field(default_factory=list)
+    model: str = ""
+    usage: dict[str, Any] | None = None
+
+
 class GeminiService:
     """Service for interacting with Google Gemini API."""
 
@@ -204,10 +214,12 @@ class GeminiService:
                         if hasattr(part, "inline_data") and part.inline_data:
                             inline = part.inline_data
                             if hasattr(inline, "data") and inline.data:
-                                images.append({
-                                    "data": base64.b64encode(inline.data).decode("utf-8"),
-                                    "mime_type": getattr(inline, "mime_type", "image/png"),
-                                })
+                                images.append(
+                                    {
+                                        "data": base64.b64encode(inline.data).decode("utf-8"),
+                                        "mime_type": getattr(inline, "mime_type", "image/png"),
+                                    }
+                                )
 
         usage = None
         if hasattr(response, "usage_metadata") and response.usage_metadata:
@@ -278,10 +290,12 @@ class GeminiService:
                         if hasattr(part, "inline_data") and part.inline_data:
                             inline = part.inline_data
                             if hasattr(inline, "data") and inline.data:
-                                images.append({
-                                    "data": base64.b64encode(inline.data).decode("utf-8"),
-                                    "mime_type": getattr(inline, "mime_type", "image/png"),
-                                })
+                                images.append(
+                                    {
+                                        "data": base64.b64encode(inline.data).decode("utf-8"),
+                                        "mime_type": getattr(inline, "mime_type", "image/png"),
+                                    }
+                                )
 
         usage = None
         if hasattr(response, "usage_metadata") and response.usage_metadata:
@@ -292,6 +306,97 @@ class GeminiService:
             }
 
         return ImageResult(
+            text=text,
+            images=images,
+            model=model_name,
+            usage=usage,
+        )
+
+    async def multimedia_query(
+        self,
+        prompt: str,
+        files: list[dict[str, Any]] | None = None,
+        model: str | None = None,
+        response_modalities: list[str] | None = None,
+        system_instruction: str | None = None,
+    ) -> MediaResult:
+        """Query Gemini with multiple media files (images, PDFs, audio, video, text).
+
+        Args:
+            prompt: Text instruction/question
+            files: List of {"data": base64_string, "mime_type": str}
+            model: Model to use (defaults to self.default_model, or image model if generating)
+            response_modalities: ["TEXT"] or ["TEXT", "IMAGE"] for image generation
+            system_instruction: Optional system prompt
+
+        Returns:
+            MediaResult with text and/or images
+        """
+        # Determine model
+        if model:
+            model_name = self.IMAGE_MODELS.get(model, model)
+        elif response_modalities and "IMAGE" in response_modalities:
+            model_name = "gemini-2.5-flash-image"
+        else:
+            model_name = self.default_model
+
+        # Build parts list: text prompt first, then files
+        parts = [types.Part.from_text(text=prompt)]
+
+        if files:
+            for file_info in files:
+                file_data = base64.b64decode(file_info["data"])
+                mime_type = file_info["mime_type"]
+                parts.append(types.Part.from_bytes(data=file_data, mime_type=mime_type))
+
+        # Build content
+        contents = [types.Content(role="user", parts=parts)]
+
+        # Build config
+        config = None
+        if response_modalities or system_instruction:
+            config_params = {}
+            if response_modalities:
+                config_params["response_modalities"] = response_modalities
+            if system_instruction:
+                config_params["system_instruction"] = system_instruction
+            config = types.GenerateContentConfig(**config_params)
+
+        response = await self.client.aio.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config=config,
+        )
+
+        # Extract text and images from response
+        text = None
+        images = []
+
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if hasattr(part, "text") and part.text:
+                            text = part.text
+                        if hasattr(part, "inline_data") and part.inline_data:
+                            inline = part.inline_data
+                            if hasattr(inline, "data") and inline.data:
+                                images.append(
+                                    {
+                                        "data": base64.b64encode(inline.data).decode("utf-8"),
+                                        "mime_type": getattr(inline, "mime_type", "image/png"),
+                                    }
+                                )
+
+        usage = None
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            usage = {
+                "prompt_tokens": getattr(response.usage_metadata, "prompt_token_count", None),
+                "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
+                "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
+            }
+
+        return MediaResult(
             text=text,
             images=images,
             model=model_name,

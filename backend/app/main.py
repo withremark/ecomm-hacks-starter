@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import chat, image
+from app.routers import chat, image, media
 from app.services.gemini import GeminiService
 
 # Load environment variables
@@ -77,6 +77,7 @@ app.add_middleware(
 # Include routers
 app.include_router(chat.router)
 app.include_router(image.router)
+app.include_router(media.router)
 
 
 @app.get("/")
@@ -92,6 +93,8 @@ async def root():
             "generate_image": "POST /api/image/generate",
             "edit_image": "POST /api/image/edit",
             "list_image_models": "GET /api/image/models",
+            "multimedia_query": "POST /api/media/query",
+            "list_media_types": "GET /api/media/supported-types",
             "health": "GET /health",
         },
     }
