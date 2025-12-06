@@ -1,7 +1,6 @@
 """Parse XML-wrapped responses from LLM."""
 
 import json
-import re
 from typing import Any
 
 

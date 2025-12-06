@@ -3,6 +3,7 @@
 import base64
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -10,6 +11,13 @@ from google import genai
 from google.genai import types
 
 logger = logging.getLogger(__name__)
+
+
+def _truncate(s: str, max_len: int = 200) -> str:
+    """Truncate string for logging."""
+    if len(s) <= max_len:
+        return s
+    return s[:max_len] + f"... ({len(s)} chars total)"
 
 
 def _detect_image_mime_type(data: bytes) -> str:
@@ -96,16 +104,28 @@ class GeminiService:
             GeminiResult with response text and metadata
         """
         model_name = model or self.default_model
+        start_time = time.time()
+
+        logger.info(f"[Gemini.query] model={model_name} prompt={_truncate(prompt)}")
+        if system_instruction:
+            logger.debug(f"[Gemini.query] system_instruction={_truncate(system_instruction)}")
 
         config = {}
         if system_instruction:
             config["system_instruction"] = system_instruction
 
-        response = await self.client.aio.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=config if config else None,
-        )
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=config if config else None,
+            )
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"[Gemini.query] FAILED model={model_name} elapsed={elapsed:.2f}s error={type(e).__name__}: {e}")
+            raise
+
+        elapsed = time.time() - start_time
 
         # Extract usage info if available
         usage = None
@@ -115,6 +135,8 @@ class GeminiService:
                 "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
                 "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
             }
+
+        logger.info(f"[Gemini.query] SUCCESS model={model_name} elapsed={elapsed:.2f}s usage={usage} response={_truncate(response.text)}")
 
         return GeminiResult(
             text=response.text,
@@ -139,6 +161,12 @@ class GeminiService:
             GeminiResult with assistant response
         """
         model_name = model or self.default_model
+        start_time = time.time()
+
+        logger.info(f"[Gemini.chat] model={model_name} messages={len(messages)}")
+        if messages:
+            last_msg = messages[-1].get("content", "")
+            logger.debug(f"[Gemini.chat] last_message={_truncate(last_msg)}")
 
         # Convert messages to Gemini format using types.Content
         contents = []
@@ -159,11 +187,18 @@ class GeminiService:
         if system_instruction:
             config = types.GenerateContentConfig(system_instruction=system_instruction)
 
-        response = await self.client.aio.models.generate_content(
-            model=model_name,
-            contents=contents,
-            config=config,
-        )
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config,
+            )
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"[Gemini.chat] FAILED model={model_name} elapsed={elapsed:.2f}s error={type(e).__name__}: {e}")
+            raise
+
+        elapsed = time.time() - start_time
 
         usage = None
         if hasattr(response, "usage_metadata") and response.usage_metadata:
@@ -172,6 +207,8 @@ class GeminiService:
                 "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
                 "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
             }
+
+        logger.info(f"[Gemini.chat] SUCCESS model={model_name} elapsed={elapsed:.2f}s usage={usage} response={_truncate(response.text)}")
 
         return GeminiResult(
             text=response.text,
@@ -195,17 +232,27 @@ class GeminiService:
         """
         # Always use Gemini 3 Pro Image
         model_name = self.DEFAULT_IMAGE_MODEL
+        start_time = time.time()
+
+        logger.info(f"[Gemini.generate_image] model={model_name} prompt={_truncate(prompt)}")
 
         # Build config with image generation enabled
         config = types.GenerateContentConfig(
             response_modalities=["TEXT", "IMAGE"],
         )
 
-        response = await self.client.aio.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=config,
-        )
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=config,
+            )
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"[Gemini.generate_image] FAILED model={model_name} elapsed={elapsed:.2f}s error={type(e).__name__}: {e}")
+            raise
+
+        elapsed = time.time() - start_time
 
         # Extract text and images from response
         text = None
@@ -239,6 +286,10 @@ class GeminiService:
                 "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
             }
 
+        logger.info(f"[Gemini.generate_image] SUCCESS model={model_name} elapsed={elapsed:.2f}s images={len(images)} usage={usage}")
+        if text:
+            logger.debug(f"[Gemini.generate_image] text_response={_truncate(text)}")
+
         return ImageResult(
             text=text,
             images=images,
@@ -265,6 +316,9 @@ class GeminiService:
             ImageResult with edited image
         """
         model_name = self.DEFAULT_IMAGE_MODEL
+        start_time = time.time()
+
+        logger.info(f"[Gemini.edit_image] model={model_name} prompt={_truncate(prompt)} image_size={len(image_data)} mime={image_mime_type}")
 
         # Build content with both text and image
         contents = [
@@ -281,11 +335,18 @@ class GeminiService:
             response_modalities=["TEXT", "IMAGE"],
         )
 
-        response = await self.client.aio.models.generate_content(
-            model=model_name,
-            contents=contents,
-            config=config,
-        )
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config,
+            )
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"[Gemini.edit_image] FAILED model={model_name} elapsed={elapsed:.2f}s error={type(e).__name__}: {e}")
+            raise
+
+        elapsed = time.time() - start_time
 
         # Extract results
         text = None
@@ -316,6 +377,8 @@ class GeminiService:
                 "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
             }
 
+        logger.info(f"[Gemini.edit_image] SUCCESS model={model_name} elapsed={elapsed:.2f}s images={len(images)} usage={usage}")
+
         return ImageResult(
             text=text,
             images=images,
@@ -343,6 +406,8 @@ class GeminiService:
         Returns:
             MediaResult with text and/or images
         """
+        start_time = time.time()
+
         # Determine model - use Gemini 3 Pro Image for image generation
         if response_modalities and "IMAGE" in response_modalities:
             model_name = self.DEFAULT_IMAGE_MODEL
@@ -350,6 +415,9 @@ class GeminiService:
             model_name = model
         else:
             model_name = self.default_model
+
+        file_count = len(files) if files else 0
+        logger.info(f"[Gemini.multimedia_query] model={model_name} prompt={_truncate(prompt)} files={file_count} modalities={response_modalities}")
 
         # Build parts list: text prompt first, then files
         parts = [types.Part.from_text(text=prompt)]
@@ -373,11 +441,18 @@ class GeminiService:
                 config_params["system_instruction"] = system_instruction
             config = types.GenerateContentConfig(**config_params)
 
-        response = await self.client.aio.models.generate_content(
-            model=model_name,
-            contents=contents,
-            config=config,
-        )
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config,
+            )
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"[Gemini.multimedia_query] FAILED model={model_name} elapsed={elapsed:.2f}s error={type(e).__name__}: {e}")
+            raise
+
+        elapsed = time.time() - start_time
 
         # Extract text and images from response
         text = None
@@ -408,6 +483,10 @@ class GeminiService:
                 "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
             }
 
+        logger.info(f"[Gemini.multimedia_query] SUCCESS model={model_name} elapsed={elapsed:.2f}s images={len(images)} usage={usage}")
+        if text:
+            logger.debug(f"[Gemini.multimedia_query] text_response={_truncate(text)}")
+
         return MediaResult(
             text=text,
             images=images,
@@ -432,16 +511,26 @@ class GeminiService:
             GeminiResult with response text and metadata
         """
         model_name = model or self.default_model
+        start_time = time.time()
+
+        logger.info(f"[Gemini.query_sync] model={model_name} prompt={_truncate(prompt)}")
 
         config = {}
         if system_instruction:
             config["system_instruction"] = system_instruction
 
-        response = self.client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=config if config else None,
-        )
+        try:
+            response = self.client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=config if config else None,
+            )
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"[Gemini.query_sync] FAILED model={model_name} elapsed={elapsed:.2f}s error={type(e).__name__}: {e}")
+            raise
+
+        elapsed = time.time() - start_time
 
         usage = None
         if hasattr(response, "usage_metadata") and response.usage_metadata:
@@ -450,6 +539,8 @@ class GeminiService:
                 "completion_tokens": getattr(response.usage_metadata, "candidates_token_count", None),
                 "total_tokens": getattr(response.usage_metadata, "total_token_count", None),
             }
+
+        logger.info(f"[Gemini.query_sync] SUCCESS model={model_name} elapsed={elapsed:.2f}s usage={usage} response={_truncate(response.text)}")
 
         return GeminiResult(
             text=response.text,

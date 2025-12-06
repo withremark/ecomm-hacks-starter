@@ -1,0 +1,86 @@
+ <context>
+
+Design Desires: Warren's Aesthetic Manifesto
+
+  1. The Texture of Memory
+
+  I want a website that feels like something you could hold. Not the cold glass of an iPhone, but the
+
+   matte finish of a Kindle Paperwhite, the grain of a well-used Moleskine, the particular weight of
+
+  a Paperblank notebook that's traveled in your bag for months. There's a reason I like Barbour waxed
+
+   jackets and Dr. Martens Wildhorse leather—they carry history, they age, they remember. The digital
+
+   equivalent isn't minimalism; it's materiality. Film grain, paper texture, the impression that
+
+  something was made rather than generated.
+
+  2. Afternoon Light and the Language of Mood
+
+  Wong Kar Wai taught me that lighting is narrative. I want my website to feel like a specific
+
+  hour—that golden period in a Parisian café around 4pm when the light comes through the window at an
+
+   angle and everything looks like a memory even as it's happening. Not hyper-sharp, not crisp "UI
+
+  design"—impressionist. Rain on glass. Expired film stock. The visual equivalent of that Japanese
+
+  concept of mono no aware, the bittersweet awareness of impermanence. This is a blog, not a
+
+  portfolio. It should feel like someone is remembering rather than presenting.
+
+  3. East Meets West, Everywhere and Nowhere
+
+  I'm Chinese with a European sensibility, or maybe European with a Chinese soul—it depends on the
+
+  day. I grew up between Hong Kong cha chaan tengs and Parisian cafés, between the chaos of the Bund
+
+  and the restraint of a British suit. I want both. The vermillion of a 朱 seal stamp next to
+
+  Mondrian's black lines. The intimacy of a Shanghai jazz club in 1930 and the minimalism of a
+
+  Japanese zen garden. Not fusion in the cheap sense—more like code-switching, the way you speak
+
+  differently to different people but remain yourself.
+
+  4. Structure with a Pulse
+
+  I love Mondrian. I genuinely do—the precision, the confidence of those black lines, the way primary
+
+   colors become sacred within the grid. But I'm also 闷骚, that untranslatable Chinese word for
+
+  someone who appears reserved but burns underneath. So: clean cards, strong structure, intentional
+
+  layout—but something slightly off. One element tilted half a degree. An asymmetric gap. The Duchamp
+
+   humor of putting a urinal in a museum. Bauhaus is too self-important for me, too convinced of its
+
+  own righteousness. I want the grid to breathe, maybe even laugh.
+
+  5. Vermillion and Sea and Smoke
+
+  The palette comes from a photograph I took in Kala—the Mediterranean through a window, turquoise
+
+  water, rust-colored trees, sandy promenade, the suggestion of mountains in haze. Black and white as
+
+   foundation, always. Then vermillion as punctuation, the color of my family seal, the signature at
+
+  the end of a letter. Muted greens and blues for atmosphere—the colors of a rainy afternoon, a
+
+  half-finished cigarette, the cover of a book you've read three times. Nothing too saturated.
+
+  Everything a little faded, like memory, like film, like the light in that café at 4pm.
+
+I like 4pm Paris. What is that specific vibe and color of paris again? 
+
+I like the feeling that it is an artist's drafting table. I like the feeling of a good pencil. Artistic creation. 
+
+I like warm, soft lights. Matte finish to paper. 
+
+</context>
+
+#Directions
+
+- 
+

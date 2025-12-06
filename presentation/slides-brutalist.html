@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ephemeral Ads - Brutalist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #f0f0e8;
+            --text: #1a1a1a;
+            --accent: #ff3300;
+            --blue: #0055ff;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Space Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .slides {
+            height: 100%;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            position: relative;
+            border-bottom: 4px solid var(--text);
+        }
+
+        .slide-content {
+            max-width: 1300px;
+            width: 100%;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 180px;
+            letter-spacing: -4px;
+            line-height: 0.85;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 100px;
+            letter-spacing: -2px;
+            line-height: 0.9;
+            text-transform: uppercase;
+        }
+
+        h3 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: var(--text);
+            color: var(--bg);
+            padding: 8px 16px;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        .accent { color: var(--accent); }
+        .blue { color: var(--blue); }
+
+        /* Title */
+        .slide-title h1 {
+            font-size: 220px;
+        }
+
+        .slide-title .subtitle {
+            font-size: 24px;
+            margin-top: 40px;
+            border-top: 4px solid var(--text);
+            padding-top: 20px;
+            display: inline-block;
+        }
+
+        .team {
+            position: absolute;
+            bottom: 60px;
+            left: 60px;
+            font-size: 14px;
+        }
+
+        .slide-num {
+            position: absolute;
+            top: 60px;
+            right: 60px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 120px;
+            color: rgba(0,0,0,0.08);
+        }
+
+        /* Problem grid */
+        .brutal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            margin-top: 60px;
+            border: 4px solid var(--text);
+        }
+
+        .brutal-cell {
+            padding: 40px;
+            border-right: 4px solid var(--text);
+        }
+
+        .brutal-cell:last-child {
+            border-right: none;
+        }
+
+        .brutal-cell .stat {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 140px;
+            line-height: 1;
+            color: var(--accent);
+        }
+
+        .brutal-cell h4 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 20px 0 12px;
+            background: var(--text);
+            color: var(--bg);
+            display: inline-block;
+            padding: 6px 12px;
+        }
+
+        /* Solution */
+        .compare-row {
+            display: flex;
+            margin-top: 60px;
+            border: 4px solid var(--text);
+        }
+
+        .compare-box {
+            flex: 1;
+            padding: 40px;
+            position: relative;
+        }
+
+        .compare-box:first-child {
+            border-right: 4px solid var(--text);
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(0,0,0,0.03) 10px,
+                rgba(0,0,0,0.03) 20px
+            );
+        }
+
+        .compare-box .tag {
+            position: absolute;
+            top: -18px;
+            left: 20px;
+            background: var(--bg);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 4px 12px;
+            border: 2px solid var(--text);
+        }
+
+        .mock-img {
+            height: 180px;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--text);
+        }
+
+        .ad-stamp {
+            background: var(--accent);
+            color: white;
+            padding: 10px 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transform: rotate(-5deg);
+        }
+
+        .dot-marker {
+            width: 20px;
+            height: 20px;
+            border: 4px solid var(--blue);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .dot-marker::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 2px dashed var(--blue);
+            border-radius: 50%;
+            animation: spin 10s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .arrow-col {
+            width: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 4px solid var(--text);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 60px;
+        }
+
+        /* Flow */
+        .flow-brutal {
+            display: flex;
+            margin-top: 60px;
+            border: 4px solid var(--text);
+        }
+
+        .flow-step {
+            flex: 1;
+            padding: 30px;
+            text-align: center;
+            border-right: 4px solid var(--text);
+        }
+
+        .flow-step:last-child {
+            border-right: none;
+        }
+
+        .flow-step .num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 80px;
+            line-height: 1;
+            color: var(--accent);
+        }
+
+        .flow-step h4 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 16px 0 8px;
+        }
+
+        .flow-step p {
+            font-size: 12px;
+            margin: 0 auto;
+        }
+
+        /* Features */
+        .feature-brutal {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            margin-top: 60px;
+            border: 4px solid var(--text);
+        }
+
+        .feat-item {
+            padding: 30px;
+            border-right: 4px solid var(--text);
+            position: relative;
+        }
+
+        .feat-item:last-child {
+            border-right: none;
+        }
+
+        .feat-item::before {
+            content: attr(data-num);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 60px;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: rgba(0,0,0,0.06);
+        }
+
+        .feat-item h4 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .feat-item p {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .demo-url {
+            margin-top: 50px;
+            font-size: 18px;
+            display: inline-block;
+            background: var(--text);
+            color: var(--bg);
+            padding: 16px 32px;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 30px;
+            right: 60px;
+            font-size: 12px;
+        }
+
+        .nav kbd {
+            background: var(--text);
+            color: var(--bg);
+            padding: 6px 12px;
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slides">
+        <!-- Slide 1 -->
+        <div class="slide slide-title">
+            <div class="slide-content">
+                <h3>Ecomm Hacks 2024</h3>
+                <h1>EPHEMERAL<br><span class="accent">ADS</span></h1>
+                <div class="subtitle">INVISIBLE COMMERCE FOR THE VISUAL WEB</div>
+            </div>
+            <div class="team">WARREN ZHU + MATTHEW KOTZBAUER</div>
+            <div class="slide-num">01</div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Problem</h3>
+                <h2>ADS ARE <span class="accent">BROKEN</span></h2>
+                <div class="brutal-grid">
+                    <div class="brutal-cell">
+                        <div class="stat">50%</div>
+                        <h4>Pinterest = Ads</h4>
+                        <p>Users overwhelmed. Sponsored content drowns discovery. Every scroll interrupted.</p>
+                    </div>
+                    <div class="brutal-cell">
+                        <div class="stat" style="font-size: 100px;">CHAT</div>
+                        <h4>Wrong Interface</h4>
+                        <p>Shopping is serendipity. Q&A chatbots feel jarring when users want to browse.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-num">02</div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Solution</h3>
+                <h2>PRODUCTS <span class="blue">IN</span> IMAGES</h2>
+                <div class="compare-row">
+                    <div class="compare-box">
+                        <span class="tag">OLD WAY</span>
+                        <div class="mock-img">
+                            <span class="ad-stamp">SPONSORED</span>
+                        </div>
+                    </div>
+                    <div class="arrow-col">→</div>
+                    <div class="compare-box">
+                        <span class="tag" style="background: var(--blue); color: white; border-color: var(--blue);">EPHEMERAL</span>
+                        <div class="mock-img">
+                            <div class="dot-marker"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-num">03</div>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>How It Works</h3>
+                <h2>THE FLOW</h2>
+                <div class="flow-brutal">
+                    <div class="flow-step">
+                        <div class="num">01</div>
+                        <h4>Upload</h4>
+                        <p>Advertiser adds products + targeting</p>
+                    </div>
+                    <div class="flow-step">
+                        <div class="num">02</div>
+                        <h4>Match</h4>
+                        <p>Semantic match to user content</p>
+                    </div>
+                    <div class="flow-step">
+                        <div class="num">03</div>
+                        <h4>Generate</h4>
+                        <p>Nano Banana edits product in</p>
+                    </div>
+                    <div class="flow-step">
+                        <div class="num">04</div>
+                        <h4>Purchase</h4>
+                        <p>Hover reveals, 1-click buy</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-num">04</div>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Demo</h3>
+                <h2>ADVERTISER</h2>
+                <div class="feature-brutal">
+                    <div class="feat-item" data-num="01">
+                        <h4>Catalog</h4>
+                        <p>Upload products for placement</p>
+                    </div>
+                    <div class="feat-item" data-num="02">
+                        <h4>Demographics</h4>
+                        <p>Age, interests, buckets</p>
+                    </div>
+                    <div class="feat-item" data-num="03">
+                        <h4>Aesthetics</h4>
+                        <p>Scene types, semantic filters</p>
+                    </div>
+                    <div class="feat-item" data-num="04">
+                        <h4>Testing</h4>
+                        <p>Preview before deploy</p>
+                    </div>
+                </div>
+                <div class="demo-url">localhost:4173/advertiser</div>
+            </div>
+            <div class="slide-num">05</div>
+        </div>
+
+        <!-- Slide 6 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Demo</h3>
+                <h2>CONSUMER</h2>
+                <div class="feature-brutal">
+                    <div class="feat-item" data-num="01">
+                        <h4>Ephemeral</h4>
+                        <p>Cards fade unless saved</p>
+                    </div>
+                    <div class="feat-item" data-num="02">
+                        <h4>Invisible</h4>
+                        <p>Products edited INTO images</p>
+                    </div>
+                    <div class="feat-item" data-num="03">
+                        <h4>Hover</h4>
+                        <p>Breathing outlines reveal</p>
+                    </div>
+                    <div class="feat-item" data-num="04">
+                        <h4>1-Click</h4>
+                        <p>Instant add to bag</p>
+                    </div>
+                </div>
+                <div class="demo-url">localhost:4173/prototype</div>
+            </div>
+            <div class="slide-num">06</div>
+        </div>
+    </div>
+
+    <div class="nav"><kbd>↑</kbd><kbd>↓</kbd> NAVIGATE</div>
+
+    <script>
+        document.addEventListener('keydown', (e) => {
+            const slides = document.querySelector('.slides');
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                slides.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                slides.scrollBy({ top: -window.innerHeight, behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>

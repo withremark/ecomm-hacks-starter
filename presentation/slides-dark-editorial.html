@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ephemeral Ads - Dark Editorial</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Archivo:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --text: #fafafa;
+            --text-muted: #888;
+            --accent: #ff4d4d;
+            --gold: #c9a962;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Archivo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .slides {
+            height: 100%;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 96px;
+            font-weight: 400;
+            letter-spacing: -3px;
+            line-height: 0.95;
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 64px;
+            font-weight: 400;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 40px;
+        }
+
+        h3 {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+
+        p {
+            font-size: 20px;
+            line-height: 1.7;
+            color: var(--text-muted);
+            font-weight: 300;
+            max-width: 600px;
+        }
+
+        .highlight {
+            color: var(--accent);
+        }
+
+        .gold {
+            color: var(--gold);
+        }
+
+        /* Title slide */
+        .slide-title {
+            text-align: center;
+        }
+
+        .slide-title h1 {
+            font-size: 140px;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-title .tagline {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 60px;
+        }
+
+        .team-names {
+            font-size: 14px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        /* Decorative elements */
+        .deco-line {
+            width: 80px;
+            height: 1px;
+            background: var(--accent);
+            margin: 40px auto;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 40px;
+            right: 60px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .slide-number span {
+            color: var(--accent);
+        }
+
+        /* Problem cards */
+        .problem-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            margin-top: 60px;
+        }
+
+        .problem-block {
+            border-left: 1px solid rgba(255,255,255,0.1);
+            padding-left: 40px;
+        }
+
+        .problem-block .number {
+            font-family: 'Playfair Display', serif;
+            font-size: 120px;
+            font-weight: 400;
+            color: var(--surface);
+            -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+            line-height: 1;
+            margin-bottom: -20px;
+        }
+
+        .problem-block h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 400;
+            margin-bottom: 16px;
+        }
+
+        /* Solution visual */
+        .solution-grid {
+            display: grid;
+            grid-template-columns: 1fr 80px 1fr;
+            align-items: center;
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .solution-box {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 40px;
+            position: relative;
+        }
+
+        .solution-box.before {
+            opacity: 0.5;
+        }
+
+        .solution-box.after {
+            border-color: var(--accent);
+        }
+
+        .solution-box .label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg);
+            padding: 0 12px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .solution-box.after .label {
+            color: var(--accent);
+        }
+
+        .mock-canvas {
+            height: 200px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .ad-badge {
+            background: var(--accent);
+            color: white;
+            padding: 6px 14px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .product-dot {
+            width: 10px;
+            height: 10px;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 169, 98, 0.4); }
+            50% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(201, 169, 98, 0); }
+        }
+
+        .arrow-divider {
+            text-align: center;
+            font-size: 32px;
+            color: var(--text-muted);
+        }
+
+        /* Flow diagram */
+        .flow-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 80px;
+        }
+
+        .flow-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-item::after {
+            content: '';
+            position: absolute;
+            top: 30px;
+            right: -50%;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+        }
+
+        .flow-item:last-child::after {
+            display: none;
+        }
+
+        .flow-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .flow-item h4 {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .flow-item p {
+            font-size: 13px;
+            color: var(--text-muted);
+            max-width: 160px;
+            margin: 0 auto;
+        }
+
+        /* Feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 32px;
+            transition: border-color 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .feature-card .icon {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 400;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .demo-hint {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .demo-hint code {
+            color: var(--gold);
+            font-family: 'Archivo', monospace;
+        }
+
+        /* Navigation */
+        .nav-hint {
+            position: fixed;
+            bottom: 40px;
+            left: 60px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .nav-hint kbd {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 4px 10px;
+            margin: 0 4px;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="slides">
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title">
+            <div class="slide-content">
+                <h3>Ecomm Hacks 2024</h3>
+                <h1>Ephemeral</h1>
+                <p class="tagline">Invisible commerce for the visual web</p>
+                <div class="deco-line"></div>
+                <p class="team-names">Warren Zhu & Matthew Kotzbauer</p>
+            </div>
+            <span class="slide-number"><span>01</span> / 06</span>
+        </div>
+
+        <!-- Slide 2: Problem -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>The Problem</h3>
+                <h2>Visual platforms have<br>an <span class="highlight">advertising problem</span></h2>
+                <div class="problem-layout">
+                    <div class="problem-block">
+                        <div class="number">50%</div>
+                        <h4>Pinterest is ads</h4>
+                        <p>Users are overwhelmed. Sponsored content drowns out discovery. Every scroll is an interruption.</p>
+                    </div>
+                    <div class="problem-block">
+                        <div class="number">Q&A</div>
+                        <h4>Chat doesn't fit</h4>
+                        <p>Shopping is serendipity, not conversation. Chatbot UIs feel jarring when users want to browse.</p>
+                    </div>
+                </div>
+            </div>
+            <span class="slide-number"><span>02</span> / 06</span>
+        </div>
+
+        <!-- Slide 3: Solution -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>The Solution</h3>
+                <h2>Products <span class="gold">inside</span> images,<br>not on top</h2>
+                <div class="solution-grid">
+                    <div class="solution-box before">
+                        <span class="label">Before</span>
+                        <div class="mock-canvas">
+                            <span class="ad-badge">Sponsored</span>
+                        </div>
+                    </div>
+                    <div class="arrow-divider">→</div>
+                    <div class="solution-box after">
+                        <span class="label">Ephemeral</span>
+                        <div class="mock-canvas">
+                            <div class="product-dot"></div>
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 40px; text-align: center;">
+                    <span class="gold">Nano Banana Pro</span> edits products INTO content. Discovery through subtle hover.
+                </p>
+            </div>
+            <span class="slide-number"><span>03</span> / 06</span>
+        </div>
+
+        <!-- Slide 4: How It Works -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Architecture</h3>
+                <h2>Two-sided platform</h2>
+                <div class="flow-row">
+                    <div class="flow-item">
+                        <div class="flow-icon">📦</div>
+                        <h4>ADVERTISER</h4>
+                        <p>Uploads products & targeting criteria</p>
+                    </div>
+                    <div class="flow-item">
+                        <div class="flow-icon">🎯</div>
+                        <h4>MATCH</h4>
+                        <p>Semantic matching to user content</p>
+                    </div>
+                    <div class="flow-item">
+                        <div class="flow-icon">🍌</div>
+                        <h4>GENERATE</h4>
+                        <p>Nano Banana edits product into image</p>
+                    </div>
+                    <div class="flow-item">
+                        <div class="flow-icon">👆</div>
+                        <h4>DISCOVER</h4>
+                        <p>Hover reveals, 1-click purchase</p>
+                    </div>
+                </div>
+            </div>
+            <span class="slide-number"><span>04</span> / 06</span>
+        </div>
+
+        <!-- Slide 5: Advertiser Demo -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Demo</h3>
+                <h2>Advertiser Console</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="icon">📦</div>
+                        <h4>Product Catalog</h4>
+                        <p>Upload and manage products for placement</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">👥</div>
+                        <h4>Demographics</h4>
+                        <p>Age, interests, custom audience buckets</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">🎨</div>
+                        <h4>Aesthetic Matching</h4>
+                        <p>Scene types, vibes, semantic filters</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">🧪</div>
+                        <h4>Live Testing</h4>
+                        <p>Preview AI placements before deploy</p>
+                    </div>
+                </div>
+                <p class="demo-hint">→ <code>localhost:4173/advertiser</code></p>
+            </div>
+            <span class="slide-number"><span>05</span> / 06</span>
+        </div>
+
+        <!-- Slide 6: Consumer Demo -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Demo</h3>
+                <h2>Consumer Experience</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="icon">✨</div>
+                        <h4>Ephemeral Canvas</h4>
+                        <p>Cards fade unless saved—urgency & focus</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">👁️</div>
+                        <h4>Invisible Placement</h4>
+                        <p>Products edited INTO images seamlessly</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">🫧</div>
+                        <h4>Hover Discovery</h4>
+                        <p>Breathing outlines that fade with cards</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon">⚡</div>
+                        <h4>1-Click Checkout</h4>
+                        <p>Glassmorphic popup, instant add to bag</p>
+                    </div>
+                </div>
+                <p class="demo-hint">→ <code>localhost:4173/prototype</code></p>
+            </div>
+            <span class="slide-number"><span>06</span> / 06</span>
+        </div>
+    </div>
+
+    <div class="nav-hint">
+        <kbd>↑</kbd><kbd>↓</kbd> to navigate
+    </div>
+
+    <script>
+        document.addEventListener('keydown', (e) => {
+            const slides = document.querySelector('.slides');
+            const slideHeight = window.innerHeight;
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                slides.scrollBy({ top: slideHeight, behavior: 'smooth' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                slides.scrollBy({ top: -slideHeight, behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>

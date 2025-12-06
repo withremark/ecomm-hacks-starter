@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ephemeral Ads - Presentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #f8f5f0;
+            --bg-warm: #f5f0e8;
+            --text: #2a2520;
+            --text-muted: #6b5f52;
+            --accent: #c85a3a;
+            --accent-soft: rgba(200, 90, 58, 0.15);
+            --gold: #d4a853;
+            --shadow: rgba(42, 37, 32, 0.08);
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* Slides Container */
+        .slides {
+            height: 100%;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            height: 100vh;
+            scroll-snap-align: start;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            position: relative;
+        }
+
+        .slide-content {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 72px;
+            font-weight: 400;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 48px;
+            font-weight: 400;
+            margin-bottom: 32px;
+        }
+
+        h3 {
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        p {
+            font-size: 22px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            max-width: 700px;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Slide-specific */
+        .slide-title {
+            background: linear-gradient(135deg, var(--bg-warm) 0%, var(--bg) 100%);
+        }
+
+        .slide-title h1 {
+            font-size: 84px;
+        }
+
+        .slide-title .subtitle {
+            font-family: 'Crimson Pro', serif;
+            font-size: 28px;
+            font-style: italic;
+            color: var(--text-muted);
+            margin-top: 16px;
+        }
+
+        .team {
+            margin-top: 48px;
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        /* Problem slide */
+        .problem-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-top: 40px;
+        }
+
+        .problem-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 24px var(--shadow);
+        }
+
+        .problem-card .stat {
+            font-family: 'Crimson Pro', serif;
+            font-size: 64px;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .problem-card h4 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .problem-card p {
+            font-size: 18px;
+        }
+
+        /* Solution slide */
+        .solution-visual {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            margin-top: 40px;
+        }
+
+        .solution-before, .solution-after {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 4px 24px var(--shadow);
+        }
+
+        .solution-before {
+            opacity: 0.6;
+        }
+
+        .solution-arrow {
+            font-size: 32px;
+            color: var(--accent);
+        }
+
+        .mock-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e8e4de 0%, #d4cfc5 100%);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mock-ad-overlay {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                var(--accent-soft),
+                var(--accent-soft) 10px,
+                transparent 10px,
+                transparent 20px
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mock-ad-badge {
+            background: var(--accent);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .mock-product-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            top: 40%;
+            left: 30%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.6; }
+        }
+
+        /* How it works */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .flow-step {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 180px;
+            text-align: center;
+            box-shadow: 0 4px 24px var(--shadow);
+        }
+
+        .flow-step .icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .flow-step h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .flow-step p {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .flow-arrow {
+            font-size: 24px;
+            color: var(--text-muted);
+        }
+
+        /* Demo placeholders */
+        .demo-frame {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 32px;
+            box-shadow: 0 4px 24px var(--shadow);
+        }
+
+        .demo-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .demo-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .demo-dot.red { background: #ff5f57; }
+        .demo-dot.yellow { background: #febc2e; }
+        .demo-dot.green { background: #28c840; }
+
+        .demo-placeholder {
+            background: linear-gradient(135deg, #f0ebe3 0%, #e8e2d8 100%);
+            height: 400px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Business model */
+        .model-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .model-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 24px var(--shadow);
+        }
+
+        .model-card.ours {
+            border: 2px solid var(--accent);
+        }
+
+        .model-card h4 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .model-card ul {
+            list-style: none;
+        }
+
+        .model-card li {
+            padding: 8px 0;
+            font-size: 16px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .model-card li::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        /* Slide number */
+        .slide-number {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Navigation hint */
+        .nav-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-hint kbd {
+            background: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: inherit;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        /* Feature list */
+        .feature-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-soft);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .feature-text h4 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .feature-text p {
+            font-size: 15px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="slides">
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title">
+            <div class="slide-content" style="text-align: center;">
+                <h3>Ecomm Hacks 2024</h3>
+                <h1>Ephemeral Ads</h1>
+                <p class="subtitle">Invisible commerce for the visual web</p>
+                <p class="team">Warren Zhu & Matthew Kotzbauer</p>
+            </div>
+            <span class="slide-number">1 / 6</span>
+        </div>
+
+        <!-- Slide 2: Problem -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>The Problem</h3>
+                <h2>Advertising on visual platforms is broken</h2>
+                <div class="problem-grid">
+                    <div class="problem-card">
+                        <div class="stat">50-60%</div>
+                        <h4>Pinterest is ads</h4>
+                        <p>Users consistently complain their feed is overwhelmed by sponsored content. Ads drown out what they came to see.</p>
+                    </div>
+                    <div class="problem-card">
+                        <div class="stat" style="font-size: 48px;">Chat UI</div>
+                        <h4>doesn't fit shopping</h4>
+                        <p>Conversational interfaces feel jarring in e-commerce. Users want to browse and discover fluidly, not engage in Q&A.</p>
+                    </div>
+                </div>
+            </div>
+            <span class="slide-number">2 / 6</span>
+        </div>
+
+        <!-- Slide 3: Solution -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Our Solution</h3>
+                <h2>Products <span class="highlight">inside</span> images, not on top</h2>
+                <div class="solution-visual">
+                    <div class="solution-before">
+                        <div class="mock-image">
+                            <div class="mock-ad-overlay">
+                                <span class="mock-ad-badge">Sponsored</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 16px;">Traditional: Overlay ads</p>
+                    </div>
+                    <span class="solution-arrow">→</span>
+                    <div class="solution-after">
+                        <div class="mock-image">
+                            <div class="mock-product-dot"></div>
+                        </div>
+                        <p style="font-size: 16px;"><strong>Ephemeral:</strong> Embedded products</p>
+                    </div>
+                </div>
+                <p style="margin-top: 32px; text-align: center;">
+                    Using <span class="highlight">Nano Banana Pro</span>, we edit products directly INTO aesthetic content. Discovery happens through subtle hover interactions.
+                </p>
+            </div>
+            <span class="slide-number">3 / 6</span>
+        </div>
+
+        <!-- Slide 4: How It Works -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>How It Works</h3>
+                <h2>Two-sided platform</h2>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="icon">📦</div>
+                        <h4>Advertiser</h4>
+                        <p>Uploads products & targeting</p>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="icon">🎯</div>
+                        <h4>Match</h4>
+                        <p>Semantic matching to user content</p>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="icon">🍌</div>
+                        <h4>Nano Banana</h4>
+                        <p>AI edits product INTO image</p>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="icon">👆</div>
+                        <h4>Discover</h4>
+                        <p>Hover reveals, 1-click buy</p>
+                    </div>
+                </div>
+            </div>
+            <span class="slide-number">4 / 6</span>
+        </div>
+
+        <!-- Slide 5: Demo - Advertiser -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Demo</h3>
+                <h2>Advertiser Console</h2>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">📦</div>
+                        <div class="feature-text">
+                            <h4>Product Catalog</h4>
+                            <p>Upload and select products to advertise</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👥</div>
+                        <div class="feature-text">
+                            <h4>Demographics</h4>
+                            <p>Age ranges, interests, custom buckets</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🎨</div>
+                        <div class="feature-text">
+                            <h4>Aesthetic Matching</h4>
+                            <p>Scene types, vibes, semantic filters</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🧪</div>
+                        <div class="feature-text">
+                            <h4>Live Testing</h4>
+                            <p>Preview AI placements before deploy</p>
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 32px; text-align: center; font-style: italic;">
+                    → Live demo at <span class="highlight">localhost:4173/advertiser</span>
+                </p>
+            </div>
+            <span class="slide-number">5 / 6</span>
+        </div>
+
+        <!-- Slide 6: Demo - Consumer -->
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Demo</h3>
+                <h2>Consumer Experience</h2>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">✨</div>
+                        <div class="feature-text">
+                            <h4>Ephemeral Canvas</h4>
+                            <p>Cards fade away unless saved—focus & urgency</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👁️</div>
+                        <div class="feature-text">
+                            <h4>Invisible Placement</h4>
+                            <p>Products edited INTO images, not overlaid</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🫧</div>
+                        <div class="feature-text">
+                            <h4>Hover Discovery</h4>
+                            <p>Subtle breathing outlines that fade with the card</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-text">
+                            <h4>1-Click Checkout</h4>
+                            <p>Glassmorphic popup, instant "Add to Bag"</p>
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 32px; text-align: center; font-style: italic;">
+                    → Live demo at <span class="highlight">localhost:4173/prototype</span>
+                </p>
+            </div>
+            <span class="slide-number">6 / 6</span>
+        </div>
+    </div>
+
+    <div class="nav-hint">
+        <kbd>↑</kbd> <kbd>↓</kbd> or scroll to navigate
+    </div>
+
+    <script>
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const slides = document.querySelector('.slides');
+            const slideHeight = window.innerHeight;
+
+            if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+                e.preventDefault();
+                slides.scrollBy({ top: slideHeight, behavior: 'smooth' });
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                slides.scrollBy({ top: -slideHeight, behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>
