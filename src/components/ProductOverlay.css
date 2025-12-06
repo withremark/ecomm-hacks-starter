@@ -10,16 +10,16 @@
 .product-overlay {
   position: fixed;
   width: 240px;
-  background: rgba(250, 248, 243, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(30, 28, 26, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   overflow: hidden;
   z-index: 500;
   box-shadow:
-    0 12px 40px rgba(74, 74, 72, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    0 16px 48px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 
   /* Entry animation */
   opacity: 0;
@@ -84,7 +84,7 @@
   font-family: 'Crimson Pro', serif;
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--pencil);
+  color: #e8e4d9;
   margin: 0 0 0.2rem;
   line-height: 1.2;
 }
@@ -92,7 +92,7 @@
 .overlay-price {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--pencil);
+  color: #c9a227;
   margin-bottom: 0.5rem;
 }
 
@@ -116,12 +116,13 @@
 
 /* Add to Bag Button */
 .add-to-bag-btn {
-  background: var(--pencil);
-  color: var(--cream);
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8e4d9;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .add-to-bag-btn:hover {
-  background: var(--pencil-light);
+  background: rgba(255, 255, 255, 0.18);
   transform: translateY(-1px);
 }
 
@@ -139,12 +140,12 @@
 
 /* Buy Now Button */
 .buy-now-btn {
-  background: var(--vermillion);
-  color: white;
+  background: rgba(201, 162, 39, 0.9);
+  color: #1a1815;
 }
 
 .buy-now-btn:hover {
-  background: var(--vermillion-dark);
+  background: rgba(201, 162, 39, 1);
   transform: translateY(-1px);
 }
 

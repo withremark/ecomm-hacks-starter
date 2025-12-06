@@ -37,7 +37,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 12.5%; /* 1/8 of viewport */
+  height: 25%; /* 1/4 of viewport (doubled) */
   pointer-events: none;
   z-index: 50;
 }
@@ -47,7 +47,9 @@
   background: linear-gradient(
     to bottom,
     rgba(26, 24, 21, 1) 0%,
-    rgba(26, 24, 21, 0.8) 40%,
+    rgba(26, 24, 21, 0.95) 10%,
+    rgba(26, 24, 21, 0.7) 30%,
+    rgba(26, 24, 21, 0.3) 60%,
     rgba(26, 24, 21, 0) 100%
   );
 }
@@ -57,7 +59,9 @@
   background: linear-gradient(
     to top,
     rgba(26, 24, 21, 1) 0%,
-    rgba(26, 24, 21, 0.8) 40%,
+    rgba(26, 24, 21, 0.95) 10%,
+    rgba(26, 24, 21, 0.7) 30%,
+    rgba(26, 24, 21, 0.3) 60%,
     rgba(26, 24, 21, 0) 100%
   );
 }

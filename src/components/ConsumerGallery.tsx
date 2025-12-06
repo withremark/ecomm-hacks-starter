@@ -270,6 +270,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
   const [activeProduct, setActiveProduct] = useState<{
     product: Product
     position: { x: number; y: number }
+    productBounds: { left: number; right: number; top: number; bottom: number }
     cardId: string
   } | null>(null)
   const [productHoverCardId, setProductHoverCardId] = useState<string | null>(null)
@@ -450,6 +451,49 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     return brightness > 128 // White = product area
   }, [])
 
+  // Calculate product bounding box from mask (in screen coordinates)
+  const getProductBounds = useCallback((cardId: string, cardRect: DOMRect): { left: number; right: number; top: number; bottom: number } | null => {
+    const imageData = maskImageDataRefs.current.get(cardId)
+    const canvas = maskCanvasRefs.current.get(cardId)
+    if (!imageData || !canvas) return null
+
+    let minX = canvas.width
+    let maxX = 0
+    let minY = canvas.height
+    let maxY = 0
+
+    // Find bounding box of white pixels in mask
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const pixelIndex = (y * canvas.width + x) * 4
+        const r = imageData.data[pixelIndex] ?? 0
+        const g = imageData.data[pixelIndex + 1] ?? 0
+        const b = imageData.data[pixelIndex + 2] ?? 0
+        const brightness = (r + g + b) / 3
+
+        if (brightness > 128) {
+          if (x < minX) minX = x
+          if (x > maxX) maxX = x
+          if (y < minY) minY = y
+          if (y > maxY) maxY = y
+        }
+      }
+    }
+
+    if (minX >= maxX || minY >= maxY) return null
+
+    // Convert mask coordinates to screen coordinates
+    const scaleX = cardRect.width / canvas.width
+    const scaleY = cardRect.height / canvas.height
+
+    return {
+      left: cardRect.left + minX * scaleX,
+      right: cardRect.left + maxX * scaleX,
+      top: cardRect.top + minY * scaleY,
+      bottom: cardRect.top + maxY * scaleY,
+    }
+  }, [])
+
   // Initialize with cards (Pinterest-like high density)
   useEffect(() => {
     const initialCards: ImageCard[] = []
@@ -575,19 +619,24 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
   // Calculate visible Y position
   const getVisibleY = (absoluteY: number) => absoluteY - scrollOffset
 
-  // Calculate fade opacity based on position
+  // Calculate fade opacity based on position - quadratic curve for gradual fade then sharp drop
   const getFadeOpacity = (visibleY: number, cardHeight: number) => {
     const viewportHeight = window.innerHeight
-    const fadeZone = viewportHeight * 0.125
+    const fadeZone = viewportHeight * 0.25 // Double the fade zone (1/4 of viewport)
 
     const cardTop = visibleY
     const cardBottom = visibleY + cardHeight
 
+    // Top fade zone - quadratic ease-in (stays visible longer, drops sharply at edge)
     if (cardTop < fadeZone) {
-      return Math.max(0, cardTop / fadeZone)
+      const t = Math.max(0, cardTop / fadeZone) // 0 at edge, 1 at boundary
+      return t * t // Quadratic: stays high longer, drops sharply near 0
     }
+    // Bottom fade zone - quadratic ease-in
     if (cardBottom > viewportHeight - fadeZone) {
-      return Math.max(0, (viewportHeight - cardBottom + cardHeight) / fadeZone)
+      const distFromBottom = viewportHeight - cardBottom
+      const t = Math.max(0, (distFromBottom + cardHeight) / fadeZone)
+      return Math.min(1, t * t) // Quadratic curve
     }
     return 1
   }
@@ -631,11 +680,15 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
 
       hoverTimeoutRef.current = setTimeout(() => {
-        setActiveProduct({
-          product: card.galleryItem.product,
-          position: { x: e.clientX, y: e.clientY },
-          cardId: card.id,
-        })
+        const bounds = getProductBounds(card.id, rect)
+        if (bounds) {
+          setActiveProduct({
+            product: card.galleryItem.product,
+            position: { x: e.clientX, y: e.clientY },
+            productBounds: bounds,
+            cardId: card.id,
+          })
+        }
       }, 300) // 300ms delay before showing product card
     } else {
       if (hoverTimeoutRef.current) {
@@ -651,7 +704,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
         }, 100)
       }
     }
-  }, [isMouseOverProductArea, productClickLocked])
+  }, [isMouseOverProductArea, productClickLocked, getProductBounds])
 
   // Handle click on product area - shows popup that stays until click elsewhere
   const handleCardClick = useCallback((card: ImageCard, e: React.MouseEvent<HTMLDivElement>) => {
@@ -664,20 +717,29 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
       // Prevent triggering drag or double-click
       e.stopPropagation()
 
-      // Show popup and lock it
-      setActiveProduct({
-        product: card.galleryItem.product,
-        position: { x: e.clientX, y: e.clientY },
-        cardId: card.id,
-      })
-      setProductClickLocked(true)
+      const bounds = getProductBounds(card.id, rect)
+      if (bounds) {
+        // Show popup and lock it
+        setActiveProduct({
+          product: card.galleryItem.product,
+          position: { x: e.clientX, y: e.clientY },
+          productBounds: bounds,
+          cardId: card.id,
+        })
+        setProductClickLocked(true)
 
-      // Clear any pending hover timeout
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
+        // Clear any pending hover timeout
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current)
+        }
       }
+    } else if (productClickLocked) {
+      // Clicked elsewhere on the card (not on product) - dismiss popup
+      setActiveProduct(null)
+      setProductClickLocked(false)
+      setProductHoverCardId(null)
     }
-  }, [isMouseOverProductArea])
+  }, [isMouseOverProductArea, getProductBounds, productClickLocked])
 
   // Handle click elsewhere to dismiss click-locked popup
   useEffect(() => {
@@ -1030,9 +1092,13 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
         <ProductOverlay
           product={activeProduct.product}
           position={activeProduct.position}
+          productBounds={activeProduct.productBounds}
           onAddToBag={() => handleAddToBag(activeProduct.product)}
           onBuyNow={() => handleBuyNow(activeProduct.product)}
-          onClose={() => setActiveProduct(null)}
+          onClose={() => {
+            setActiveProduct(null)
+            setProductClickLocked(false)
+          }}
         />
       )}
 

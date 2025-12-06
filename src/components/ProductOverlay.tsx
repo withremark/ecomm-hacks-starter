@@ -15,6 +15,7 @@ import './ProductOverlay.css'
 interface ProductOverlayProps {
   product: Product
   position: { x: number; y: number }
+  productBounds: { left: number; right: number; top: number; bottom: number }
   onAddToBag: () => void
   onBuyNow: () => void
   onClose: () => void
@@ -23,6 +24,7 @@ interface ProductOverlayProps {
 export function ProductOverlay({
   product,
   position,
+  productBounds,
   onAddToBag,
   onBuyNow,
   onClose
@@ -38,18 +40,20 @@ export function ProductOverlay({
     })
   }, [])
 
-  // Calculate position - to the right of cursor, vertically centered
+  // Calculate position - to the right of product, vertically centered
   const calculatePosition = () => {
-    const gap = 24
+    const gap = 16
     const cardWidth = 240
     const cardHeight = 260
 
-    let left = position.x + gap
-    let top = position.y - cardHeight / 2
+    // Position to the right of the product bounds, vertically centered
+    const productCenterY = (productBounds.top + productBounds.bottom) / 2
+    let left = productBounds.right + gap
+    let top = productCenterY - cardHeight / 2
 
     // Flip to left if would overflow right edge
     if (left + cardWidth > window.innerWidth - 20) {
-      left = position.x - cardWidth - gap
+      left = productBounds.left - cardWidth - gap
     }
 
     // Keep vertically in bounds
