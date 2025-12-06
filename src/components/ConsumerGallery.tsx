@@ -287,14 +287,17 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
   const maskCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map())
   const maskImageDataRefs = useRef<Map<string, ImageData>>(new Map())
 
+  // Highlight canvas refs for product outline overlay
+  const highlightDataUrlRefs = useRef<Map<string, string>>(new Map())
+
   scrollOffsetRef.current = scrollOffset
 
   // Check if a new card would overlap with existing cards
   const wouldOverlap = useCallback((newX: number, newY: number, newHeight: number, existingCards: ImageCard[]): boolean => {
-    const padding = 40
+    const padding = 15 // Tighter padding for Pinterest-like density
     for (const card of existingCards) {
       const horizontalDistance = Math.abs(card.x - newX)
-      if (horizontalDistance < 22) {
+      if (horizontalDistance < 16) { // Tighter horizontal check
         const verticalDistance = Math.abs(card.y - newY)
         const combinedHeight = (card.height + newHeight) / 2 + padding
         if (verticalDistance < combinedHeight) {
@@ -318,34 +321,33 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     const galleryItem = items[Math.floor(Math.random() * items.length)]!
     usedGalleryIds.current.add(galleryItem.id)
 
-    // Smaller card sizes for higher density
-    const widthOptions = [200, 240, 260]
+    // Pinterest-style: smaller cards, more variety in sizes
+    const widthOptions = [160, 180, 200, 220]
     const width = widthOptions[Math.floor(Math.random() * widthOptions.length)]!
-    const heightRatio = 0.65 + Math.random() * 0.25 // 0.65 to 0.9 (landscape oriented)
+    // More height variety for Pinterest masonry effect
+    const heightRatio = 0.7 + Math.random() * 0.6 // 0.7 to 1.3 (mix of portrait/landscape)
     const height = Math.floor(width * heightRatio)
 
     // Find a non-overlapping position using columns
     let x: number
     let cardY = y ?? scrollOffsetRef.current + Math.random() * window.innerHeight
     let attempts = 0
-    const maxAttempts = 20
+    const maxAttempts = 30
 
-    // Use 4 columns for higher density, with hard padding from edges
-    // Columns positioned so cards stay fully visible (accounting for card width)
-    const columns = [18, 38, 58, 78] // 4 columns, spaced evenly
+    // Pinterest-style: 5 columns, tightly packed
+    const columns = [12, 28, 44, 60, 76, 88] // 6 column positions for denser packing
 
     do {
       const columnIndex = Math.floor(Math.random() * columns.length)
-      x = columns[columnIndex]! + (Math.random() - 0.5) * 8
+      x = columns[columnIndex]! + (Math.random() - 0.5) * 4 // Less random offset for tighter grid
 
       // Clamp to ensure cards don't get cut off at edges
-      // Card is centered at x%, so need to account for half-width
-      const minX = 12 // Hard left boundary
-      const maxX = 88 // Hard right boundary
+      const minX = 8 // Hard left boundary
+      const maxX = 92 // Hard right boundary
       x = Math.max(minX, Math.min(maxX, x))
 
       if (attempts > maxAttempts / 2 && existingCards) {
-        cardY += 80 + Math.random() * 40
+        cardY += 60 + Math.random() * 30 // Tighter vertical stacking
       }
       attempts++
     } while (existingCards && wouldOverlap(x, cardY, height, existingCards) && attempts < maxAttempts)
@@ -367,7 +369,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     }
   }, [wouldOverlap])
 
-  // Load mask image data for a card
+  // Load mask image data for a card and generate highlight overlay
   const loadMaskForCard = useCallback((cardId: string, maskUrl: string) => {
     if (maskImageDataRefs.current.has(cardId)) return
 
@@ -385,6 +387,35 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
 
       maskCanvasRefs.current.set(cardId, canvas)
       maskImageDataRefs.current.set(cardId, imageData)
+
+      // Generate highlight overlay - subtle white tint only on product area
+      const highlightCanvas = document.createElement('canvas')
+      highlightCanvas.width = img.width
+      highlightCanvas.height = img.height
+      const highlightCtx = highlightCanvas.getContext('2d')
+      if (!highlightCtx) return
+
+      const highlightData = highlightCtx.createImageData(img.width, img.height)
+
+      // Create semi-transparent white overlay on product (mask white) areas
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i] ?? 0
+        const g = imageData.data[i + 1] ?? 0
+        const b = imageData.data[i + 2] ?? 0
+        const brightness = (r + g + b) / 3
+
+        if (brightness > 128) {
+          // Product area - subtle white tint (alpha = 40 for subtle effect)
+          highlightData.data[i] = 255     // R
+          highlightData.data[i + 1] = 255 // G
+          highlightData.data[i + 2] = 255 // B
+          highlightData.data[i + 3] = 40  // A - subtle
+        }
+        // else: stays fully transparent (0, 0, 0, 0)
+      }
+
+      highlightCtx.putImageData(highlightData, 0, 0)
+      highlightDataUrlRefs.current.set(cardId, highlightCanvas.toDataURL('image/png'))
     }
     img.src = maskUrl
   }, [])
@@ -416,12 +447,12 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     return brightness > 128 // White = product area
   }, [])
 
-  // Initialize with cards (higher density)
+  // Initialize with cards (Pinterest-like high density)
   useEffect(() => {
     const initialCards: ImageCard[] = []
-    for (let i = 0; i < 12; i++) {
-      const yBase = 40 + i * 200 // Tighter vertical spacing
-      const card = createCard(yBase + Math.random() * 50, initialCards)
+    for (let i = 0; i < 20; i++) { // More initial cards
+      const yBase = 20 + i * 140 // Much tighter vertical spacing
+      const card = createCard(yBase + Math.random() * 40, initialCards)
       if (card) {
         initialCards.push(card)
         // Load mask for hover detection
@@ -491,9 +522,9 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
       if (visibleBottom > totalHeight - viewportHeight) {
         setCards(prev => {
           const newCards: ImageCard[] = [...prev]
-          for (let i = 0; i < 6; i++) { // Spawn more cards at once
-            const yBase = totalHeight + i * 200 // Tighter spacing
-            const card = createCard(yBase + Math.random() * 50, newCards)
+          for (let i = 0; i < 10; i++) { // Spawn more cards at once for density
+            const yBase = totalHeight + i * 140 // Tighter spacing
+            const card = createCard(yBase + Math.random() * 40, newCards)
             if (card) {
               newCards.push(card)
               loadMaskForCard(card.id, card.galleryItem.maskUrl)
@@ -501,7 +532,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
           }
           return newCards
         })
-        setTotalHeight(prev => prev + 1400)
+        setTotalHeight(prev => prev + 1600)
       }
     }
     checkSpawn()
@@ -866,6 +897,14 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
                 loading="lazy"
                 draggable={false}
               />
+              {/* Product highlight overlay - only visible when hovering over product area */}
+              {productHoverCardId === card.id && highlightDataUrlRefs.current.get(card.id) && (
+                <img
+                  src={highlightDataUrlRefs.current.get(card.id)}
+                  alt=""
+                  className="product-highlight-overlay"
+                />
+              )}
               <div className="product-badge">{card.galleryItem.product.brand}</div>
             </div>
           )

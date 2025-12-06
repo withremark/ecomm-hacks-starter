@@ -38,7 +38,7 @@ class SceneProduct(NamedTuple):
     placement_hint: str  # Where to place the product in the scene
 
 
-# Scene + Product combinations
+# Scene + Product combinations - placement hints emphasize natural, casual positioning
 COMBINATIONS = [
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200",
@@ -48,7 +48,7 @@ COMBINATIONS = [
         product_brand="Louis Vuitton",
         product_price=2030,
         product_description="Iconic tote in Monogram canvas",
-        placement_hint="on one of the wooden cafe tables",
+        placement_hint="casually slouched against a wooden chair, as if someone just set it down",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200",
@@ -58,7 +58,7 @@ COMBINATIONS = [
         product_brand="Gucci",
         product_price=2350,
         product_description="Matelassé leather shoulder bag",
-        placement_hint="on one of the restaurant chairs",
+        placement_hint="draped over the back of a chair with its strap hanging naturally",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1511081692775-05d0f180a065?w=1200",
@@ -68,7 +68,7 @@ COMBINATIONS = [
         product_brand="Chanel",
         product_price=8200,
         product_description="Lambskin with gold chain",
-        placement_hint="on a small bistro table",
+        placement_hint="resting on a bistro chair, tilted slightly as if just placed there",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=1200",
@@ -78,7 +78,7 @@ COMBINATIONS = [
         product_brand="Prada",
         product_price=3200,
         product_description="Saffiano leather tote",
-        placement_hint="beside a potted plant on a table",
+        placement_hint="leaning against a table leg on the ground, casually forgotten",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=1200",
@@ -88,7 +88,7 @@ COMBINATIONS = [
         product_brand="Saint Laurent",
         product_price=2590,
         product_description="Y-quilted leather bag",
-        placement_hint="on the counter or bench",
+        placement_hint="slouched on a bench seat, partially visible with strap trailing",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1200",
@@ -98,7 +98,7 @@ COMBINATIONS = [
         product_brand="Celine",
         product_price=2950,
         product_description="Shiny calfskin with clasp",
-        placement_hint="on one of the metal bistro chairs",
+        placement_hint="hooked over a chair arm, swinging slightly as if just hung there",
     ),
     # --- New combinations ---
     SceneProduct(
@@ -109,7 +109,7 @@ COMBINATIONS = [
         product_brand="Longchamp",
         product_price=145,
         product_description="Iconic foldable nylon tote",
-        placement_hint="on a small reading table near the books",
+        placement_hint="collapsed and resting on a reading chair, handles splayed out",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200",
@@ -119,7 +119,7 @@ COMBINATIONS = [
         product_brand="Loewe",
         product_price=3650,
         product_description="Geometric calfskin panels",
-        placement_hint="on the cushioned window seat",
+        placement_hint="nestled into the cushioned window seat, partially sunk in",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1525610553991-2bede1a236e2?w=1200",
@@ -129,7 +129,7 @@ COMBINATIONS = [
         product_brand="Gucci",
         product_price=2980,
         product_description="Tiger head closure bag",
-        placement_hint="on the lounge chair by the railing",
+        placement_hint="laid flat on a lounge chair, catching the sunset light",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=1200",
@@ -139,7 +139,7 @@ COMBINATIONS = [
         product_brand="Fendi",
         product_price=4200,
         product_description="Iconic twist-lock bag",
-        placement_hint="on one of the dining chairs",
+        placement_hint="hanging off a dining chair back, strap dangling toward the floor",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=1200",
@@ -149,7 +149,7 @@ COMBINATIONS = [
         product_brand="Louis Vuitton",
         product_price=1640,
         product_description="Iconic Monogram Boston bag",
-        placement_hint="on a street-side cafe table",
+        placement_hint="sitting on the ground next to a chair, slouched on its side",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1485182708500-e8f1f318ba72?w=1200",
@@ -159,7 +159,7 @@ COMBINATIONS = [
         product_brand="Dior",
         product_price=5500,
         product_description="Cannage-stitched lambskin",
-        placement_hint="on the velvet armchair",
+        placement_hint="resting on a velvet armchair seat, handles flopping to the side",
     ),
     SceneProduct(
         scene_url="https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=1200",
@@ -169,7 +169,7 @@ COMBINATIONS = [
         product_brand="Celine",
         product_price=2100,
         product_description="Soft grained calfskin tote",
-        placement_hint="on the wicker chair",
+        placement_hint="slouched in a wicker chair, slightly collapsed as if emptied",
     ),
 ]
 
@@ -218,10 +218,16 @@ async def generate_integrated_scene(
 2. SECOND IMAGE: A {combo.scene_description} (the BACKGROUND scene)
 
 YOUR TASK: Edit the SECOND image (scene) to ADD the bag from the FIRST image.
-Place the bag naturally {combo.placement_hint}.
-The bag should be clearly visible, properly lit to match the scene, and look like it belongs there.
-Keep the rest of the scene intact - only add the bag.
-Output the edited scene with the bag placed in it."""
+
+IMPORTANT - Make the placement feel NATURAL and SUBTLE:
+- Place the bag {combo.placement_hint} in a relaxed, casual position
+- The bag should look like someone naturally set it down - slightly slouched or resting, NOT standing upright artificially
+- Match the lighting and color grading of the scene exactly
+- Add subtle shadows and reflections so the bag feels integrated into the environment
+- The bag should be visible but not the obvious focal point - it should feel discovered, not placed
+
+Keep the rest of the scene completely intact - only add the bag.
+Output the edited scene with the bag naturally placed in it."""
 
     try:
         response = await client.aio.models.generate_content(
