@@ -55,3 +55,10 @@ backend/claude_files/
 # Build artifacts
 dist/
 build/
+
+# Orchestra
+.orchestra/ORCHESTRA_SETUP.md
+.mcp.json
+.claude/mcp.json
+.claude/orchestra.md
+.claude/commands/merge-child.md
