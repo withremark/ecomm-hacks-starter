@@ -288,7 +288,8 @@
         let maskImageData = null;
         let hoverTimeout = null;
         let isOverProduct = false;
-        const HOVER_DELAY = 800;
+        let isClickLocked = false;  // true when popup was triggered by click
+        const HOVER_DELAY = 400;    // halved from 800
 
         // Load the mask image into canvas for pixel sampling
         async function loadMask() {
@@ -400,13 +401,10 @@
 
         // Mouse move handler
         function handleMouseMove(e) {
-            const overProduct = isMouseOverProduct(e.clientX, e.clientY);
+            // If click-locked, don't respond to hover changes
+            if (isClickLocked) return;
 
-            // Debug indicator
-            // cursorIndicator.style.display = 'block';
-            // cursorIndicator.style.left = (e.clientX + 15) + 'px';
-            // cursorIndicator.style.top = (e.clientY + 15) + 'px';
-            // cursorIndicator.textContent = overProduct ? 'PRODUCT' : 'background';
+            const overProduct = isMouseOverProduct(e.clientX, e.clientY);
 
             if (overProduct && !isOverProduct) {
                 // Started hovering over product
@@ -424,9 +422,37 @@
                 productCard.classList.remove('active');
             }
 
-            // Update card position while active
-            if (productCard.classList.contains('active')) {
+            // Update card position while active (only for hover, not click-locked)
+            if (productCard.classList.contains('active') && !isClickLocked) {
                 positionCard(e.clientX, e.clientY);
+            }
+        }
+
+        // Click handler - clicking on product locks the popup open
+        function handleClick(e) {
+            const overProduct = isMouseOverProduct(e.clientX, e.clientY);
+
+            if (overProduct) {
+                // Clicked on product - lock the popup open
+                e.stopPropagation();
+                isClickLocked = true;
+                clearTimeout(hoverTimeout);
+                hoverHighlight.classList.add('active');
+                productCard.classList.add('active');
+                positionCard(e.clientX, e.clientY);
+            }
+        }
+
+        // Dismiss click-locked popup when clicking elsewhere
+        function handleDocumentClick(e) {
+            if (!isClickLocked) return;
+
+            // Check if click is outside the product card
+            if (!productCard.contains(e.target)) {
+                isClickLocked = false;
+                isOverProduct = false;
+                hoverHighlight.classList.remove('active');
+                productCard.classList.remove('active');
             }
         }
 
@@ -437,18 +463,24 @@
             drawHighlight();
 
             sceneContainer.addEventListener('mousemove', handleMouseMove);
+            sceneContainer.addEventListener('click', handleClick);
             sceneContainer.addEventListener('mouseleave', () => {
+                // Don't dismiss if click-locked
+                if (isClickLocked) return;
+
                 isOverProduct = false;
                 clearTimeout(hoverTimeout);
                 hoverHighlight.classList.remove('active');
                 productCard.classList.remove('active');
-                cursorIndicator.style.display = 'none';
             });
 
             // Keep card active when hovering over it
             productCard.addEventListener('mouseenter', () => {
                 clearTimeout(hoverTimeout);
             });
+
+            // Dismiss click-locked popup when clicking elsewhere on page
+            document.addEventListener('click', handleDocumentClick);
 
             console.log('Mask-based hover detection initialized');
         }

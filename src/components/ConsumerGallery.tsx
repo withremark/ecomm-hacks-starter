@@ -273,6 +273,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     cardId: string
   } | null>(null)
   const [productHoverCardId, setProductHoverCardId] = useState<string | null>(null)
+  const [productClickLocked, setProductClickLocked] = useState(false) // When true, popup stays until click elsewhere
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Drag state
@@ -599,16 +600,18 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
   const handleCardMouseLeave = useCallback((cardId: string) => {
     setTimeout(() => {
       const overlayHovered = document.querySelector('.product-overlay:hover')
-      if (!overlayHovered) {
+      if (!overlayHovered && !productClickLocked) {
         setActiveProduct(null)
         setProductHoverCardId(null)
+        setCards(prev => prev.map(c => c.id === cardId ? { ...c, isHovered: false } : c))
+      } else if (!productClickLocked) {
         setCards(prev => prev.map(c => c.id === cardId ? { ...c, isHovered: false } : c))
       }
     }, 150)
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current)
     }
-  }, [])
+  }, [productClickLocked])
 
   // Handle mouse move over card for mask detection
   const handleCardMouseMove = useCallback((card: ImageCard, e: React.MouseEvent<HTMLDivElement>) => {
@@ -633,20 +636,75 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
           position: { x: e.clientX, y: e.clientY },
           cardId: card.id,
         })
-      }, 600) // 600ms delay before showing product card
+      }, 300) // 300ms delay before showing product card
     } else {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current)
       }
-      // Only clear if not hovering on overlay
-      setTimeout(() => {
-        const overlayHovered = document.querySelector('.product-overlay:hover')
-        if (!overlayHovered) {
-          setActiveProduct(null)
-        }
-      }, 100)
+      // Only clear if not hovering on overlay and not click-locked
+      if (!productClickLocked) {
+        setTimeout(() => {
+          const overlayHovered = document.querySelector('.product-overlay:hover')
+          if (!overlayHovered) {
+            setActiveProduct(null)
+          }
+        }, 100)
+      }
+    }
+  }, [isMouseOverProductArea, productClickLocked])
+
+  // Handle click on product area - shows popup that stays until click elsewhere
+  const handleCardClick = useCallback((card: ImageCard, e: React.MouseEvent<HTMLDivElement>) => {
+    const cardElement = e.currentTarget
+    const rect = cardElement.getBoundingClientRect()
+
+    const overProduct = isMouseOverProductArea(card.id, e.clientX, e.clientY, rect)
+
+    if (overProduct) {
+      // Prevent triggering drag or double-click
+      e.stopPropagation()
+
+      // Show popup and lock it
+      setActiveProduct({
+        product: card.galleryItem.product,
+        position: { x: e.clientX, y: e.clientY },
+        cardId: card.id,
+      })
+      setProductClickLocked(true)
+
+      // Clear any pending hover timeout
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+      }
     }
   }, [isMouseOverProductArea])
+
+  // Handle click elsewhere to dismiss click-locked popup
+  useEffect(() => {
+    if (!productClickLocked) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const overlay = document.querySelector('.product-overlay')
+      const target = e.target as Node
+
+      // If clicking outside the overlay, dismiss it
+      if (!overlay?.contains(target)) {
+        setActiveProduct(null)
+        setProductClickLocked(false)
+        setProductHoverCardId(null)
+      }
+    }
+
+    // Add listener with a small delay to avoid immediate dismissal
+    const timeoutId = setTimeout(() => {
+      window.addEventListener('click', handleClickOutside)
+    }, 50)
+
+    return () => {
+      clearTimeout(timeoutId)
+      window.removeEventListener('click', handleClickOutside)
+    }
+  }, [productClickLocked])
 
   // Handle double click to expand
   const handleCardDoubleClick = useCallback((cardId: string) => {
@@ -861,7 +919,10 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
               >
                 <div
                   className="expanded-card"
-                  onClick={e => e.stopPropagation()}
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleCardClick(card, e)
+                  }}
                   onMouseMove={e => handleCardMouseMove(card, e)}
                   onMouseLeave={() => handleCardMouseLeave(card.id)}
                 >
@@ -908,6 +969,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
               onDoubleClick={() => handleCardDoubleClick(card.id)}
               onMouseMove={e => handleCardMouseMove(card, e)}
               onMouseDown={e => handleDragStart(card.id, e)}
+              onClick={e => handleCardClick(card, e)}
             >
               <img
                 src={card.galleryItem.sceneUrl}
