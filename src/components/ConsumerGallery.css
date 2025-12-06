@@ -296,3 +296,38 @@
   border-radius: 4px;
   z-index: 1000;
 }
+
+/* 1-Click Purchase Success Toast */
+.purchase-toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: rgba(30, 28, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 12px;
+  color: #e8e4d9;
+  font-size: 0.9rem;
+  z-index: 500;
+  animation: toastSlideIn 0.3s ease;
+}
+
+.purchase-toast svg {
+  color: #c9a227;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

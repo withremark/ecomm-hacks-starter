@@ -18,6 +18,7 @@ import clsx from 'clsx'
 import { ShoppingBag } from './ShoppingBag'
 import { ProductOverlay } from './ProductOverlay'
 import { PaymentScreen } from './PaymentScreen'
+import { UserProfile } from './UserProfile'
 import type { Product, BagItem, PaymentInfo } from './ConsumerCanvas'
 import { WritingPane } from './WritingPane'
 import { ResizeDivider } from './ResizeDivider'
@@ -258,6 +259,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
   const [bag, setBag] = useState<BagItem[]>([])
   const [showBag, setShowBag] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(() => {
     const saved = localStorage.getItem('ephemeral-payment-info')
     return saved ? JSON.parse(saved) : null
@@ -744,8 +746,17 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
 
   const handleBuyNow = useCallback((product: Product) => {
     handleAddToBag(product)
-    setShowPayment(true)
-  }, [handleAddToBag])
+    // 1-click checkout if payment info is saved
+    if (paymentInfo && paymentInfo.cardNumber) {
+      setPurchaseSuccess(true)
+      setBag([])
+      setTimeout(() => {
+        setPurchaseSuccess(false)
+      }, 3000)
+    } else {
+      setShowPayment(true)
+    }
+  }, [handleAddToBag, paymentInfo])
 
   const handleRemoveFromBag = useCallback((productId: string) => {
     setBag(prev => prev.filter(item => item.product.id !== productId))
@@ -917,6 +928,17 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
           )
         })}
 
+        {/* User Profile Button */}
+        <button
+          className={clsx('user-button', paymentInfo && 'has-info')}
+          onClick={() => setShowProfile(true)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </button>
+
         {/* Shopping Bag Button */}
         <button
           className={clsx('bag-button', bagCount > 0 && 'has-items')}
@@ -978,6 +1000,25 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
           onClose={() => setShowPayment(false)}
           success={purchaseSuccess}
         />
+      )}
+
+      {/* User Profile Modal */}
+      <UserProfile
+        savedInfo={paymentInfo}
+        onSaveInfo={handleSavePaymentInfo}
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
+      />
+
+      {/* 1-Click Purchase Success Toast */}
+      {purchaseSuccess && !showPayment && (
+        <div className="purchase-toast">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <span>Purchase complete</span>
+        </div>
       )}
 
       {/* Debug mode indicator */}

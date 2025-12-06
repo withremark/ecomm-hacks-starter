@@ -1,0 +1,212 @@
+/**
+ * UserProfile - Minimal profile modal styles
+ */
+
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.profile-overlay.visible {
+  opacity: 1;
+}
+
+.profile-modal {
+  background: rgba(30, 28, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  transform: translateY(10px) scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.profile-overlay.visible .profile-modal {
+  transform: translateY(0) scale(1);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.profile-header h2 {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 400;
+  font-size: 1.3rem;
+  color: #e8e4d9;
+  margin: 0;
+}
+
+.profile-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.profile-close svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.profile-subtitle {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 20px 0;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-section h3 {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(201, 162, 39, 0.8);
+  margin: 0 0 10px 0;
+}
+
+.profile-field {
+  margin-bottom: 8px;
+}
+
+.profile-field:last-child {
+  margin-bottom: 0;
+}
+
+.profile-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.profile-row:last-child {
+  margin-bottom: 0;
+}
+
+.profile-form input,
+.profile-form select {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #e8e4d9;
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.profile-form input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.profile-form input:focus,
+.profile-form select:focus {
+  border-color: rgba(201, 162, 39, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.profile-form select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.profile-save {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background: rgba(201, 162, 39, 0.9);
+  border: none;
+  border-radius: 8px;
+  color: #1a1815;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-save:hover {
+  background: rgba(201, 162, 39, 1);
+  transform: translateY(-1px);
+}
+
+.profile-saved-hint {
+  font-size: 0.7rem;
+  color: rgba(201, 162, 39, 0.6);
+  text-align: center;
+  margin: 12px 0 0 0;
+}
+
+/* User button in header */
+.user-button {
+  position: fixed;
+  top: 20px;
+  right: 76px;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.user-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.user-button.has-info {
+  background: rgba(201, 162, 39, 0.2);
+  border-color: rgba(201, 162, 39, 0.4);
+}
+
+.user-button svg {
+  width: 20px;
+  height: 20px;
+}
