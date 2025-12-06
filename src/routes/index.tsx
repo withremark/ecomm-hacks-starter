@@ -16,7 +16,7 @@ import { CanvasRoute } from './CanvasRoute'
 import { NotFound } from './NotFound'
 import DraftingTable from '@/prototypes/paris-drafting-table/DraftingTable'
 import DraftingTableV2 from '@/prototypes/paris-drafting-table/DraftingTableV2'
-import { ProductPlacement, ParisianAtelier, AdvertiserConsole } from '@/console'
+import { ProductPlacement, Console, AdvertiserConsole } from '@/console'
 
 export const router = createBrowserRouter([
   {
@@ -25,7 +25,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/console',
-    element: <ParisianAtelier />,
+    element: <Console />,
   },
   {
     path: '/console/matrix',
