@@ -1,10 +1,12 @@
 """Style router - Chat-based visual style modifications."""
 
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.config import get_model
+from app.services.gemini import GeminiService
 from app.models.canvas_config import load_defaults
 from app.models.ephemeral import StyleRequest, StyleResponse
 from app.services.prompt_loader import format_history, load_and_fill_prompt
@@ -14,6 +16,14 @@ from app.services.xml_parser import parse_style_response
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["ephemeral"])
+
+
+def get_gemini_service(request: Request) -> GeminiService:
+    """Dependency to get Gemini service from app state."""
+    service = request.app.state.gemini_service
+    if not service:
+        raise HTTPException(status_code=503, detail="Gemini service not initialized")
+    return service
 
 
 def _theme_to_string(theme: dict) -> str:
@@ -26,17 +36,16 @@ def _theme_to_string(theme: dict) -> str:
 
 
 @router.post("/style")
-async def style_chat(request_data: StyleRequest, request: Request) -> StyleResponse:
+async def style_chat(
+    request_data: StyleRequest,
+    gemini: Annotated[GeminiService, Depends(get_gemini_service)],
+) -> StyleResponse:
     """Handle style chat - modify visual themes via natural language.
 
     Takes current theme/physics + user message, returns partial updates.
     Model is determined by defaults.models.chat.
     """
     try:
-        gemini = request.app.state.gemini_service
-        if not gemini:
-            raise HTTPException(status_code=503, detail="Gemini service not initialized")
-
         # Get or create session for conversation continuity
         session_id, history = await session_store.get_or_create(
             request_data.session_id

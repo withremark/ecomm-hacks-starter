@@ -2,10 +2,12 @@
 
 import json
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.config import get_model
+from app.services.gemini import GeminiService
 from app.models.canvas_config import validate_card_or_raise
 from app.models.ephemeral import GenerateRequest, GenerateResponse
 from app.services.prompt_loader import load_and_fill_prompt
@@ -14,6 +16,15 @@ from app.services.xml_parser import parse_card_response
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["ephemeral"])
+
+
+def get_gemini_service(request: Request) -> GeminiService:
+    """Dependency to get Gemini service from app state."""
+    service = request.app.state.gemini_service
+    if not service:
+        raise HTTPException(status_code=503, detail="Gemini service not initialized")
+    return service
+
 
 async def _generate_image_card(
     gemini,
@@ -72,17 +83,16 @@ async def _generate_image_card(
 
 
 @router.post("/generate")
-async def generate(request_data: GenerateRequest, request: Request) -> GenerateResponse:
+async def generate(
+    request_data: GenerateRequest,
+    gemini: Annotated[GeminiService, Depends(get_gemini_service)],
+) -> GenerateResponse:
     """Generate new content based on config.
 
     Model is determined by config.models.generation.
     Returns card with cost tracking information.
     """
     try:
-        gemini = request.app.state.gemini_service
-        if not gemini:
-            raise HTTPException(status_code=503, detail="Gemini service not initialized")
-
         # Get model
         gen_model = request_data.config.models.generation
         gemini_model = get_model(gen_model)

@@ -1,10 +1,12 @@
 """Onboard router - Q&A conversation to generate CanvasConfig."""
 
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.config import get_model
+from app.services.gemini import GeminiService
 from app.models.canvas_config import load_defaults
 from app.models.ephemeral import OnboardRequest, OnboardResponse
 from app.services.prompt_loader import format_history, load_and_fill_prompt
@@ -16,8 +18,19 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["ephemeral"])
 
 
+def get_gemini_service(request: Request) -> GeminiService:
+    """Dependency to get Gemini service from app state."""
+    service = request.app.state.gemini_service
+    if not service:
+        raise HTTPException(status_code=503, detail="Gemini service not initialized")
+    return service
+
+
 @router.post("/onboard")
-async def onboard(request_data: OnboardRequest, request: Request) -> OnboardResponse:
+async def onboard(
+    request_data: OnboardRequest,
+    gemini: Annotated[GeminiService, Depends(get_gemini_service)],
+) -> OnboardResponse:
     """Handle onboarding Q&A conversation.
 
     Returns either a follow-up question or a complete CanvasConfig.
@@ -26,9 +39,6 @@ async def onboard(request_data: OnboardRequest, request: Request) -> OnboardResp
     Model is determined by defaults.models.onboarding (or current config if editing).
     """
     try:
-        gemini = request.app.state.gemini_service
-        if not gemini:
-            raise HTTPException(status_code=503, detail="Gemini service not initialized")
 
         # Get or create session
         session_id, history = await session_store.get_or_create(request_data.session_id)
