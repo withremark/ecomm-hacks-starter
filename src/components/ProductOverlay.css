@@ -149,3 +149,41 @@
   transform: translateY(-1px);
 }
 
+/* Flying Product Animation - "suck into bag" effect */
+.flying-product-element {
+  position: fixed;
+  z-index: 600;
+  pointer-events: none;
+  width: var(--start-width);
+  height: var(--start-height);
+  left: var(--start-x);
+  top: var(--start-y);
+  transform: translate(-50%, -50%);
+  animation: suckIntoBag 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.flying-product-element img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes suckIntoBag {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) scale(0.15);
+    opacity: 0.4;
+    filter: blur(6px);
+  }
+}
+

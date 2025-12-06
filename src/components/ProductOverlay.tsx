@@ -6,6 +6,7 @@
  * - Positioned to the right of mouse, vertically centered
  * - Add to Bag and Buy Now buttons side by side
  * - Smooth micro-animations
+ * - "Suck into bag" animation when adding to bag
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -15,7 +16,8 @@ import './ProductOverlay.css'
 interface ProductOverlayProps {
   product: Product
   position: { x: number; y: number }
-  productBounds: { left: number; right: number; top: number; bottom: number }
+  productBounds?: { left: number; right: number; top: number; bottom: number }
+  sceneImageUrl?: string  // For the flying product animation
   onAddToBag: () => void
   onBuyNow: () => void
   onClose: () => void
@@ -25,13 +27,23 @@ export function ProductOverlay({
   product,
   position,
   productBounds,
+  sceneImageUrl,
   onAddToBag,
   onBuyNow,
   onClose
 }: ProductOverlayProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
+  const addToBagBtnRef = useRef<HTMLButtonElement>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [addedFeedback, setAddedFeedback] = useState(false)
+  const [flyingProduct, setFlyingProduct] = useState<{
+    startX: number
+    startY: number
+    startWidth: number
+    startHeight: number
+    endX: number
+    endY: number
+  } | null>(null)
 
   // Animate in
   useEffect(() => {
@@ -45,6 +57,11 @@ export function ProductOverlay({
     const gap = 16
     const cardWidth = 240
     const cardHeight = 260
+
+    // If no productBounds, fall back to position-based placement
+    if (!productBounds) {
+      return { left: position.x + gap, top: position.y - cardHeight / 2 }
+    }
 
     // Position to the right of the product bounds, vertically centered
     const productCenterY = (productBounds.top + productBounds.bottom) / 2
@@ -67,12 +84,46 @@ export function ProductOverlay({
 
   const pos = calculatePosition()
 
-  // Handle add to bag with feedback
+  // Handle add to bag with flying animation
   const handleAddToBag = () => {
-    setAddedFeedback(true)
+    const btn = addToBagBtnRef.current
+    if (!btn || !productBounds) {
+      // Fallback without animation
+      setAddedFeedback(true)
+      setTimeout(() => onAddToBag(), 400)
+      return
+    }
+
+    const btnRect = btn.getBoundingClientRect()
+
+    // Calculate product center and size from bounds
+    const productWidth = productBounds.right - productBounds.left
+    const productHeight = productBounds.bottom - productBounds.top
+    const productCenterX = (productBounds.left + productBounds.right) / 2
+    const productCenterY = (productBounds.top + productBounds.bottom) / 2
+
+    // Button center as destination
+    const btnCenterX = btnRect.left + btnRect.width / 2
+    const btnCenterY = btnRect.top + btnRect.height / 2
+
+    // Start the flying animation
+    setFlyingProduct({
+      startX: productCenterX,
+      startY: productCenterY,
+      startWidth: productWidth,
+      startHeight: productHeight,
+      endX: btnCenterX,
+      endY: btnCenterY,
+    })
+
+    // After animation duration, show feedback and complete
     setTimeout(() => {
-      onAddToBag()
-    }, 400)
+      setFlyingProduct(null)
+      setAddedFeedback(true)
+      setTimeout(() => {
+        onAddToBag()
+      }, 300)
+    }, 350) // Animation duration
   }
 
   // Format price
@@ -108,6 +159,7 @@ export function ProductOverlay({
         {/* Action Buttons - side by side */}
         <div className="overlay-actions">
           <button
+            ref={addToBagBtnRef}
             className="overlay-btn add-to-bag-btn"
             onClick={handleAddToBag}
           >
@@ -130,6 +182,23 @@ export function ProductOverlay({
           </button>
         </div>
       </div>
+
+      {/* Flying product animation */}
+      {flyingProduct && productBounds && (
+        <div
+          className="flying-product-element"
+          style={{
+            '--start-x': `${flyingProduct.startX}px`,
+            '--start-y': `${flyingProduct.startY}px`,
+            '--start-width': `${flyingProduct.startWidth}px`,
+            '--start-height': `${flyingProduct.startHeight}px`,
+            '--end-x': `${flyingProduct.endX}px`,
+            '--end-y': `${flyingProduct.endY}px`,
+          } as React.CSSProperties}
+        >
+          <img src={product.imageUrl} alt="" />
+        </div>
+      )}
     </div>
   )
 }

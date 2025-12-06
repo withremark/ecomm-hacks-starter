@@ -28,6 +28,7 @@ import './ConsumerGallery.css'
 interface GalleryItem {
   id: string
   sceneUrl: string
+  baseUrl: string  // Original scene without product
   maskUrl: string
   productImageUrl: string
   product: Product
@@ -38,6 +39,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-0",
     sceneUrl: "/gallery/scene_0.png",
+    baseUrl: "/gallery/base_0.jpg",
     maskUrl: "/gallery/mask_0.png",
     productImageUrl: "/gallery/product_0.jpg",
     product: {
@@ -52,6 +54,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-1",
     sceneUrl: "/gallery/scene_1.png",
+    baseUrl: "/gallery/base_1.jpg",
     maskUrl: "/gallery/mask_1.png",
     productImageUrl: "/gallery/product_1.jpg",
     product: {
@@ -66,6 +69,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-2",
     sceneUrl: "/gallery/scene_2.png",
+    baseUrl: "/gallery/base_2.jpg",
     maskUrl: "/gallery/mask_2.png",
     productImageUrl: "/gallery/product_2.jpg",
     product: {
@@ -80,6 +84,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-3",
     sceneUrl: "/gallery/scene_3.png",
+    baseUrl: "/gallery/base_3.jpg",
     maskUrl: "/gallery/mask_3.png",
     productImageUrl: "/gallery/product_3.jpg",
     product: {
@@ -94,6 +99,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-4",
     sceneUrl: "/gallery/scene_4.png",
+    baseUrl: "/gallery/base_4.jpg",
     maskUrl: "/gallery/mask_4.png",
     productImageUrl: "/gallery/product_4.jpg",
     product: {
@@ -108,6 +114,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-5",
     sceneUrl: "/gallery/scene_5.png",
+    baseUrl: "/gallery/base_5.jpg",
     maskUrl: "/gallery/mask_5.png",
     productImageUrl: "/gallery/product_5.jpg",
     product: {
@@ -122,6 +129,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-6",
     sceneUrl: "/gallery/scene_6.png",
+    baseUrl: "/gallery/base_6.jpg",
     maskUrl: "/gallery/mask_6.png",
     productImageUrl: "/gallery/product_6.jpg",
     product: {
@@ -136,6 +144,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-7",
     sceneUrl: "/gallery/scene_7.png",
+    baseUrl: "/gallery/base_7.jpg",
     maskUrl: "/gallery/mask_7.png",
     productImageUrl: "/gallery/product_7.jpg",
     product: {
@@ -150,6 +159,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-8",
     sceneUrl: "/gallery/scene_8.png",
+    baseUrl: "/gallery/base_8.jpg",
     maskUrl: "/gallery/mask_8.png",
     productImageUrl: "/gallery/product_8.jpg",
     product: {
@@ -164,6 +174,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-9",
     sceneUrl: "/gallery/scene_9.png",
+    baseUrl: "/gallery/base_9.jpg",
     maskUrl: "/gallery/mask_9.png",
     productImageUrl: "/gallery/product_9.jpg",
     product: {
@@ -178,6 +189,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-10",
     sceneUrl: "/gallery/scene_10.png",
+    baseUrl: "/gallery/base_10.jpg",
     maskUrl: "/gallery/mask_10.png",
     productImageUrl: "/gallery/product_10.jpg",
     product: {
@@ -192,6 +204,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-11",
     sceneUrl: "/gallery/scene_11.png",
+    baseUrl: "/gallery/base_11.jpg",
     maskUrl: "/gallery/mask_11.png",
     productImageUrl: "/gallery/product_11.jpg",
     product: {
@@ -206,6 +219,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "gallery-12",
     sceneUrl: "/gallery/scene_12.png",
+    baseUrl: "/gallery/base_12.jpg",
     maskUrl: "/gallery/mask_12.png",
     productImageUrl: "/gallery/product_12.jpg",
     product: {
@@ -272,10 +286,14 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     position: { x: number; y: number }
     productBounds: { left: number; right: number; top: number; bottom: number }
     cardId: string
+    sceneImageUrl: string
   } | null>(null)
   const [productHoverCardId, setProductHoverCardId] = useState<string | null>(null)
   const [productClickLocked, setProductClickLocked] = useState(false) // When true, popup stays until click elsewhere
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Removed products state (cards where product has been added to bag)
+  const [removedProductCardIds, setRemovedProductCardIds] = useState<Set<string>>(new Set())
 
   // Drag state
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null)
@@ -752,6 +770,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
             position: { x: e.clientX, y: e.clientY },
             productBounds: bounds,
             cardId: card.id,
+            sceneImageUrl: card.galleryItem.sceneUrl,
           })
         }
       }, 300) // 300ms delay before showing product card
@@ -790,6 +809,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
           position: { x: e.clientX, y: e.clientY },
           productBounds: bounds,
           cardId: card.id,
+          sceneImageUrl: card.galleryItem.sceneUrl,
         })
         setProductClickLocked(true)
 
@@ -914,7 +934,53 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
   }, [draggingCardId, handleDragMove, handleDragEnd])
 
   // Shopping handlers
-  const handleAddToBag = useCallback((product: Product) => {
+  const handleAddToBag = useCallback((product: Product, cardId: string) => {
+    // Add to bag immediately
+    setBag(prev => {
+      const existing = prev.find(item => item.product.id === product.id)
+      if (existing) {
+        return prev.map(item =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        )
+      }
+      return [...prev, { product, quantity: 1, addedAt: new Date() }]
+    })
+
+    // Mark this card as having its product removed (triggers fade animation via CSS)
+    setRemovedProductCardIds(prev => new Set(prev).add(cardId))
+
+    // Close the popup
+    setActiveProduct(null)
+    setProductClickLocked(false)
+  }, [])
+
+  // Revert a removed product (put it back in the image)
+  const handleRevertProduct = useCallback((cardId: string, productId: string) => {
+    // Remove from bag
+    setBag(prev => {
+      const item = prev.find(i => i.product.id === productId)
+      if (item && item.quantity > 1) {
+        return prev.map(i =>
+          i.product.id === productId
+            ? { ...i, quantity: i.quantity - 1 }
+            : i
+        )
+      }
+      return prev.filter(i => i.product.id !== productId)
+    })
+
+    // Restore product to card
+    setRemovedProductCardIds(prev => {
+      const next = new Set(prev)
+      next.delete(cardId)
+      return next
+    })
+  }, [])
+
+  const handleBuyNow = useCallback((product: Product) => {
+    // Direct add to bag without animation for Buy Now
     setBag(prev => {
       const existing = prev.find(item => item.product.id === product.id)
       if (existing) {
@@ -927,10 +993,8 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
       return [...prev, { product, quantity: 1, addedAt: new Date() }]
     })
     setActiveProduct(null)
-  }, [])
+    setProductClickLocked(false)
 
-  const handleBuyNow = useCallback((product: Product) => {
-    handleAddToBag(product)
     // 1-click checkout if payment info is saved
     if (paymentInfo && paymentInfo.cardNumber) {
       setPurchaseSuccess(true)
@@ -941,7 +1005,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     } else {
       setShowPayment(true)
     }
-  }, [handleAddToBag, paymentInfo])
+  }, [paymentInfo])
 
   const handleRemoveFromBag = useCallback((productId: string) => {
     setBag(prev => prev.filter(item => item.product.id !== productId))
@@ -1052,20 +1116,38 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
                   onMouseMove={e => handleCardMouseMove(card, e)}
                   onMouseLeave={() => handleCardMouseLeave(card.id)}
                 >
+                  {/* Base layer: original scene without product */}
+                  <img
+                    src={card.galleryItem.baseUrl}
+                    alt=""
+                    className="expanded-card-image expanded-card-base"
+                  />
+                  {/* Top layer: scene with product - fades out when product removed */}
                   <img
                     src={card.galleryItem.sceneUrl}
                     alt=""
-                    className="expanded-card-image"
+                    className={`expanded-card-image expanded-card-scene ${removedProductCardIds.has(card.id) ? 'product-removed' : ''}`}
                   />
                   {/* Product highlight overlay for expanded view */}
-                  {productHoverCardId === card.id && highlightDataUrlRefs.current.get(card.id) && (
+                  {!removedProductCardIds.has(card.id) && productHoverCardId === card.id && highlightDataUrlRefs.current.get(card.id) && (
                     <img
                       src={highlightDataUrlRefs.current.get(card.id)}
                       alt=""
                       className="expanded-highlight-overlay"
                     />
                   )}
-                  <div className="expanded-esc-hint">esc</div>
+                  {/* Revert button - shows when product is removed */}
+                  {removedProductCardIds.has(card.id) && (
+                    <button
+                      className="revert-button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRevertProduct(card.id, card.galleryItem.product.id)
+                      }}
+                    >
+                      revert
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -1098,20 +1180,41 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
               onMouseDown={e => handleDragStart(card.id, e)}
               onClick={e => handleCardClick(card, e)}
             >
+              {/* Base layer: original scene without product */}
+              <img
+                src={card.galleryItem.baseUrl}
+                alt=""
+                className="gallery-card-image gallery-card-base"
+                loading="lazy"
+                draggable={false}
+              />
+              {/* Top layer: scene with product - fades out when product removed */}
               <img
                 src={card.galleryItem.sceneUrl}
                 alt=""
-                className="gallery-card-image"
+                className={`gallery-card-image gallery-card-scene ${removedProductCardIds.has(card.id) ? 'product-removed' : ''}`}
                 loading="lazy"
                 draggable={false}
               />
               {/* Product highlight overlay - only visible when hovering over product area */}
-              {productHoverCardId === card.id && highlightDataUrlRefs.current.get(card.id) && (
+              {!removedProductCardIds.has(card.id) && productHoverCardId === card.id && highlightDataUrlRefs.current.get(card.id) && (
                 <img
                   src={highlightDataUrlRefs.current.get(card.id)}
                   alt=""
                   className="product-highlight-overlay"
                 />
+              )}
+              {/* Revert button - shows when product is removed */}
+              {removedProductCardIds.has(card.id) && (
+                <button
+                  className="revert-button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRevertProduct(card.id, card.galleryItem.product.id)
+                  }}
+                >
+                  revert
+                </button>
               )}
             </div>
           )
@@ -1158,7 +1261,8 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
           product={activeProduct.product}
           position={activeProduct.position}
           productBounds={activeProduct.productBounds}
-          onAddToBag={() => handleAddToBag(activeProduct.product)}
+          sceneImageUrl={activeProduct.sceneImageUrl}
+          onAddToBag={() => handleAddToBag(activeProduct.product, activeProduct.cardId)}
           onBuyNow={() => handleBuyNow(activeProduct.product)}
           onClose={() => {
             setActiveProduct(null)

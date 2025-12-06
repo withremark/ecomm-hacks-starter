@@ -122,6 +122,28 @@
   display: block;
 }
 
+/* Layered image crossfade for product removal */
+.gallery-card-base {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* Base may have different aspect ratio - ensure it covers */
+  object-fit: cover;
+}
+
+.gallery-card-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transition: opacity 0.5s ease;
+  /* Ensure scene fully covers base - add background to prevent bleed-through */
+  background: #1a1815;
+}
+
+.gallery-card-scene.product-removed {
+  opacity: 0;
+}
+
 /* Expanded Card Overlay */
 .expanded-card-overlay {
   position: fixed;
@@ -166,6 +188,25 @@
   object-fit: contain;
   border-radius: 16px;
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* Layered image crossfade for expanded view */
+.expanded-card-base {
+  position: relative;
+  z-index: 0;
+  object-fit: contain;
+}
+
+.expanded-card-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transition: opacity 0.5s ease;
+  background: #000;
+}
+
+.expanded-card-scene.product-removed {
+  opacity: 0;
 }
 
 /* Highlight overlay for expanded view - mask-based product tint */
@@ -334,4 +375,68 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+}
+
+/* Flying Product Animation - sucks product into bag */
+.flying-product {
+  position: fixed;
+  z-index: 600;
+  pointer-events: none;
+  animation: flyToBag 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.flying-product img {
+  width: var(--start-width);
+  height: var(--start-height);
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes flyToBag {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0.3;
+    filter: blur(4px);
+  }
+}
+
+/* Revert Button */
+.revert-button {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.65rem;
+  font-family: monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease, background 0.2s ease;
+  z-index: 5;
+}
+
+.expanded-card:hover .revert-button,
+.gallery-card:hover .revert-button {
+  opacity: 1;
+}
+
+.revert-button:hover {
+  background: rgba(201, 162, 39, 0.4);
+  color: #fff;
 }
