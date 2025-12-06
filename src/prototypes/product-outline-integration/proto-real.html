@@ -104,9 +104,6 @@
         .hover-highlight canvas {
             width: 100%;
             height: 100%;
-            /* Add extra glow effect via CSS */
-            filter: drop-shadow(0 0 12px rgba(255,255,255,0.7))
-                    drop-shadow(0 0 25px rgba(255,255,255,0.4));
         }
 
         /* Product card - more translucent, positioned to the right */
@@ -348,7 +345,7 @@
             return brightness > 128;
         }
 
-        // Draw highlight based on mask - ONLY on product area, rest is transparent
+        // Draw highlight based on mask - subtle brightness boost on product area only
         function drawHighlight() {
             if (!highlightCtx || !maskImageData) return;
 
@@ -357,28 +354,20 @@
             // Create image data - everything starts fully transparent
             const imgData = highlightCtx.createImageData(highlightCanvas.width, highlightCanvas.height);
 
-            // Only draw white highlight where mask is white (product area)
-            // Everything else stays transparent (alpha = 0)
+            // Subtle white overlay on product area only - very low opacity for gentle effect
             for (let i = 0; i < maskImageData.data.length; i += 4) {
                 const brightness = (maskImageData.data[i] + maskImageData.data[i+1] + maskImageData.data[i+2]) / 3;
                 if (brightness > 128) {
-                    // Product area - more pronounced white highlight
+                    // Product area - very subtle white tint
                     imgData.data[i] = 255;     // R
                     imgData.data[i+1] = 255;   // G
                     imgData.data[i+2] = 255;   // B
-                    imgData.data[i+3] = 100;   // A - more visible (was 60)
+                    imgData.data[i+3] = 35;    // A - very subtle (was 100)
                 }
-                // else: leave as 0,0,0,0 (fully transparent) - no darkening!
+                // else: stays fully transparent
             }
 
             highlightCtx.putImageData(imgData, 0, 0);
-
-            // Add a glowing outline effect around the product
-            // We'll draw a slightly expanded version with blur
-            highlightCtx.globalCompositeOperation = 'source-over';
-            highlightCtx.filter = 'blur(8px)';
-            highlightCtx.drawImage(highlightCanvas, 0, 0);
-            highlightCtx.filter = 'none';
         }
 
         // Position the product card to the RIGHT of cursor, vertically centered
