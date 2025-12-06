@@ -37,7 +37,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 25%; /* 1/4 of viewport (doubled) */
+  height: 12.5%; /* 1/8 of viewport */
   pointer-events: none;
   z-index: 50;
 }

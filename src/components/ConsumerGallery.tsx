@@ -585,12 +585,24 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
     checkSpawn()
   }, [scrollOffset, totalHeight, createCard, loadMaskForCard])
 
-  // Handle Escape key to close expanded view
+  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape to close expanded view
       if (e.key === 'Escape' && expandedCardId) {
         setExpandedCardId(null)
         setCards(prev => prev.map(c => ({ ...c, isExpanded: false })))
+        return
+      }
+
+      // Arrow keys and j/k for scrolling
+      const scrollAmount = 80
+      if (e.key === 'ArrowUp' || e.key === 'k') {
+        e.preventDefault()
+        setScrollOffset(prev => Math.max(0, prev - scrollAmount))
+      } else if (e.key === 'ArrowDown' || e.key === 'j') {
+        e.preventDefault()
+        setScrollOffset(prev => prev + scrollAmount)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -619,26 +631,79 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
   // Calculate visible Y position
   const getVisibleY = (absoluteY: number) => absoluteY - scrollOffset
 
-  // Calculate fade opacity based on position - quadratic curve for gradual fade then sharp drop
-  const getFadeOpacity = (visibleY: number, cardHeight: number) => {
+  // Calculate CSS mask for non-uniform opacity within a card (quadratic fade)
+  const getCardMaskStyle = (visibleY: number, cardHeight: number): React.CSSProperties => {
     const viewportHeight = window.innerHeight
-    const fadeZone = viewportHeight * 0.25 // Double the fade zone (1/4 of viewport)
+    const fadeZone = viewportHeight * 0.125
 
     const cardTop = visibleY
     const cardBottom = visibleY + cardHeight
 
-    // Top fade zone - quadratic ease-in (stays visible longer, drops sharply at edge)
-    if (cardTop < fadeZone) {
-      const t = Math.max(0, cardTop / fadeZone) // 0 at edge, 1 at boundary
-      return t * t // Quadratic: stays high longer, drops sharply near 0
+    // Check if card overlaps with fade zones
+    const inTopFade = cardTop < fadeZone
+    const inBottomFade = cardBottom > viewportHeight - fadeZone
+
+    if (!inTopFade && !inBottomFade) {
+      return {} // No mask needed
     }
-    // Bottom fade zone - quadratic ease-in
-    if (cardBottom > viewportHeight - fadeZone) {
-      const distFromBottom = viewportHeight - cardBottom
-      const t = Math.max(0, (distFromBottom + cardHeight) / fadeZone)
-      return Math.min(1, t * t) // Quadratic curve
+
+    // Build gradient stops for mask
+    const stops: string[] = []
+
+    if (inTopFade) {
+      // How much of card is in top fade zone
+      const fadeEnd = Math.min(fadeZone - cardTop, cardHeight)
+      const fadeEndPercent = (fadeEnd / cardHeight) * 100
+
+      // Opacity at card top (quadratic)
+      const topT = Math.max(0, cardTop / fadeZone)
+      const topOpacity = topT * topT
+
+      // Opacity at fade zone boundary
+      if (fadeEndPercent < 100) {
+        stops.push(`rgba(0,0,0,${topOpacity}) 0%`)
+        stops.push(`rgba(0,0,0,1) ${fadeEndPercent}%`)
+      } else {
+        // Entire card in top fade zone
+        const bottomT = Math.max(0, cardBottom / fadeZone)
+        const bottomOpacity = bottomT * bottomT
+        stops.push(`rgba(0,0,0,${topOpacity}) 0%`)
+        stops.push(`rgba(0,0,0,${bottomOpacity}) 100%`)
+      }
     }
-    return 1
+
+    if (inBottomFade && !inTopFade) {
+      // How much of card is above bottom fade zone
+      const fadeStart = viewportHeight - fadeZone - cardTop
+      const fadeStartPercent = Math.max(0, (fadeStart / cardHeight) * 100)
+
+      // Opacity at card bottom (quadratic)
+      const bottomT = Math.max(0, (viewportHeight - cardBottom) / fadeZone)
+      const bottomOpacity = bottomT * bottomT
+
+      stops.push(`rgba(0,0,0,1) 0%`)
+      stops.push(`rgba(0,0,0,1) ${fadeStartPercent}%`)
+      stops.push(`rgba(0,0,0,${bottomOpacity}) 100%`)
+    } else if (inBottomFade && inTopFade) {
+      // Card spans both fade zones - already handled top, add bottom
+      const fadeStart = viewportHeight - fadeZone - cardTop
+      const fadeStartPercent = Math.max(0, (fadeStart / cardHeight) * 100)
+      const bottomT = Math.max(0, (viewportHeight - cardBottom) / fadeZone)
+      const bottomOpacity = bottomT * bottomT
+
+      // Merge with existing stops
+      if (stops.length > 0) {
+        stops.push(`rgba(0,0,0,1) ${fadeStartPercent}%`)
+        stops.push(`rgba(0,0,0,${bottomOpacity}) 100%`)
+      }
+    }
+
+    if (stops.length === 0) return {}
+
+    return {
+      maskImage: `linear-gradient(to bottom, ${stops.join(', ')})`,
+      WebkitMaskImage: `linear-gradient(to bottom, ${stops.join(', ')})`,
+    }
   }
 
   // Handle hover
@@ -969,8 +1034,7 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
         {/* Cards */}
         {visibleCards.map(card => {
           const visibleY = getVisibleY(card.y)
-          const fadeOpacity = card.isExpanded ? 1 : getFadeOpacity(visibleY, card.height)
-          const finalOpacity = card.opacity * fadeOpacity
+          const maskStyle = card.isExpanded ? {} : getCardMaskStyle(visibleY, card.height)
 
           if (card.isExpanded) {
             return (
@@ -1021,10 +1085,11 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
                 top: visibleY,
                 width: card.width,
                 height: card.height,
-                opacity: finalOpacity,
+                opacity: card.opacity,
                 transform: `translate(-50%, 0) scale(${draggingCardId === card.id ? 1.05 : card.isHovered ? 1.02 : card.scale})`,
                 zIndex: draggingCardId === card.id ? 100 : undefined,
                 cursor: draggingCardId === card.id ? 'grabbing' : 'grab',
+                ...maskStyle,
               }}
               onMouseEnter={() => handleCardMouseEnter(card.id)}
               onMouseLeave={() => handleCardMouseLeave(card.id)}
