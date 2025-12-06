@@ -859,6 +859,14 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
                     alt=""
                     className="expanded-card-image"
                   />
+                  {/* Product highlight overlay for expanded view */}
+                  {productHoverCardId === card.id && highlightDataUrlRefs.current.get(card.id) && (
+                    <img
+                      src={highlightDataUrlRefs.current.get(card.id)}
+                      alt=""
+                      className="expanded-highlight-overlay"
+                    />
+                  )}
                   <div className="expanded-esc-hint">esc</div>
                 </div>
               </div>
@@ -905,7 +913,6 @@ export function ConsumerGallery({ debugMode = false }: ConsumerGalleryProps) {
                   className="product-highlight-overlay"
                 />
               )}
-              <div className="product-badge">{card.galleryItem.product.brand}</div>
             </div>
           )
         })}
