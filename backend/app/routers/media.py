@@ -19,7 +19,10 @@ router = APIRouter(prefix="/api/media", tags=["media"])
 
 def get_gemini_service(request: Request) -> GeminiService:
     """Dependency to get Gemini service from app state."""
-    return request.app.state.gemini_service
+    service = request.app.state.gemini_service
+    if not service:
+        raise HTTPException(status_code=503, detail="Gemini service not initialized")
+    return service
 
 
 @router.post("/query", response_model=MediaQueryResponse)

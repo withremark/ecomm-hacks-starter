@@ -21,7 +21,10 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 def get_gemini_service(request: Request) -> GeminiService:
     """Dependency to get Gemini service from app state."""
-    return request.app.state.gemini_service
+    service = request.app.state.gemini_service
+    if not service:
+        raise HTTPException(status_code=503, detail="Gemini service not initialized")
+    return service
 
 
 @router.post("/completions", response_model=ChatResponse)
@@ -36,7 +39,9 @@ async def chat_completions(
     """
     try:
         # Convert messages to the format expected by Gemini
-        messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
+        messages = [
+            {"role": msg.role, "content": msg.content} for msg in request.messages
+        ]
 
         result = await gemini.chat(
             messages=messages,
@@ -88,9 +93,10 @@ async def list_models():
     """List available Gemini models."""
     return {
         "models": [
-            {"id": "gemini-2.0-flash", "description": "Fast, efficient model for most tasks"},
-            {"id": "gemini-2.5-flash", "description": "Latest flash model with improved capabilities"},
-            {"id": "gemini-2.0-flash-thinking", "description": "Flash model with extended thinking"},
-            {"id": "gemini-1.5-pro", "description": "Pro model for complex tasks"},
+            {
+                "id": "gemini-3-pro-preview",
+                "description": "Gemini 3 Pro - Best quality for all tasks",
+                "default": True,
+            },
         ]
     }

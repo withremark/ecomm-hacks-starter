@@ -46,7 +46,7 @@ curl -X POST http://localhost:8000/api/chat/query \
 ```json
 {
   "prompt": "What is 2+2?",
-  "model": "gemini-2.5-flash",      // optional
+  "model": "gemini-3-pro-preview",   // optional
   "system_prompt": "Be concise"      // optional
 }
 ```
@@ -55,7 +55,7 @@ curl -X POST http://localhost:8000/api/chat/query \
 ```json
 {
   "text": "4",
-  "model": "gemini-2.5-flash",
+  "model": "gemini-3-pro-preview",
   "usage": {"prompt_tokens": 5, "completion_tokens": 1, "total_tokens": 6}
 }
 ```
@@ -86,7 +86,7 @@ curl -X POST http://localhost:8000/api/media/query \
     {"data": "<base64-encoded-data>", "mime_type": "image/png"},
     {"data": "<base64-encoded-data>", "mime_type": "image/jpeg"}
   ],
-  "model": "gemini-2.5-flash",           // optional
+  "model": "gemini-3-pro-preview",       // optional
   "response_modalities": ["TEXT"],        // optional: ["TEXT"] or ["TEXT", "IMAGE"]
   "system_prompt": "Be detailed"          // optional
 }
@@ -103,7 +103,7 @@ curl -X POST http://localhost:8000/api/media/query \
 {
   "text": "The first image shows...",
   "images": [],
-  "model": "gemini-2.5-flash",
+  "model": "gemini-3-pro-preview",
   "usage": {"prompt_tokens": 100, "total_tokens": 150}
 }
 ```
@@ -125,8 +125,7 @@ curl -X POST http://localhost:8000/api/image/generate \
 ```json
 {
   "prompt": "A red apple on a white background",
-  "model": "gemini-2.5-flash-image",    // optional
-  "aspect_ratio": "1:1"                  // optional: "1:1", "16:9", "9:16"
+  "model": "gemini-3-pro-image-preview"  // optional
 }
 ```
 
@@ -137,7 +136,7 @@ curl -X POST http://localhost:8000/api/image/generate \
   "images": [
     {"data": "<base64-encoded-image>", "mime_type": "image/png"}
   ],
-  "model": "gemini-2.5-flash-image"
+  "model": "gemini-3-pro-image-preview"
 }
 ```
 
@@ -182,9 +181,8 @@ curl -X POST http://localhost:8000/api/chat/completions \
 
 | Model ID | Alias | Use Case |
 |----------|-------|----------|
-| `gemini-2.5-flash` | - | Fast text/vision (default) |
-| `gemini-2.5-flash-image` | `nano-banana` | Image generation |
-| `gemini-3-pro-image-preview` | `nano-banana-pro` | Best quality images |
+| `gemini-3-pro-preview` | - | Text/vision (default) |
+| `gemini-3-pro-image-preview` | `nano-banana-pro` | Image generation (default) |
 
 ---
 
@@ -263,7 +261,7 @@ async function queryWithImage(file) {
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `GEMINI_API_KEY` | Yes | - | Your Google AI API key |
-| `GEMINI_MODEL` | No | `gemini-2.5-flash` | Default model |
+| `GEMINI_MODEL` | No | `gemini-3-pro-preview` | Default model |
 
 Get your API key at: https://aistudio.google.com/
 

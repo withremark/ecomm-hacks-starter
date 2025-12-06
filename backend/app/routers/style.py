@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.models.canvas_config import load_defaults
 from app.models.ephemeral import StyleRequest, StyleResponse
-from app.services.prompt_loader import load_and_fill_prompt, format_history
+from app.services.prompt_loader import format_history, load_and_fill_prompt
 from app.services.session_store import session_store
 from app.services.xml_parser import parse_style_response
 
@@ -51,7 +51,7 @@ async def style_chat(request_data: StyleRequest, request: Request) -> StyleRespo
         # Load defaults for model selection
         defaults = load_defaults()
         chat_model = defaults.get("models", {}).get("chat", "flash")
-        gemini_model = MODEL_MAP.get(chat_model, "gemini-2.5-flash")
+        gemini_model = MODEL_MAP.get(chat_model, "gemini-3-pro-preview")
 
         # Format current config for the prompt
         card_theme_str = _theme_to_string(request_data.current_card_theme.model_dump())

@@ -14,7 +14,7 @@ class ChatRequest(BaseModel):
     """Request for chat completion."""
 
     messages: list[Message] = Field(..., description="Conversation history")
-    model: str | None = Field(None, description="Model to use (defaults to gemini-2.0-flash)")
+    model: str | None = Field(None, description="Model to use (defaults to gemini-3-pro-preview)")
     system_prompt: str | None = Field(None, description="System instructions")
 
 

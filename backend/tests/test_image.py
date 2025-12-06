@@ -31,8 +31,7 @@ async def test_list_image_models_includes_expected_models(client):
     model_ids = [m["id"] for m in data["models"]]
 
     # Verify expected models are present
-    assert "gemini-2.5-flash-image" in model_ids
-    assert "gemini-2.0-flash-exp" in model_ids
+    assert "gemini-3-pro-image-preview" in model_ids
 
 
 @pytest.mark.anyio
@@ -44,7 +43,7 @@ async def test_list_image_models_has_default_model(client):
     default_models = [m for m in data["models"] if m.get("default")]
 
     assert len(default_models) == 1
-    assert default_models[0]["id"] == "gemini-2.5-flash-image"
+    assert default_models[0]["id"] == "gemini-3-pro-image-preview"
 
 
 @pytest.mark.anyio
@@ -71,24 +70,6 @@ async def test_generate_image_returns_response(client):
         assert "mime_type" in image
         # Verify the data is valid base64
         assert len(image["data"]) > 0
-
-
-@pytest.mark.anyio
-@pytest.mark.integration
-@pytest.mark.skipif(not os.environ.get("GEMINI_API_KEY"), reason="GEMINI_API_KEY not set")
-async def test_generate_image_with_aspect_ratio(client):
-    """Test that aspect_ratio parameter is accepted."""
-    response = await client.post(
-        "/api/image/generate",
-        json={
-            "prompt": "A simple blue square",
-            "aspect_ratio": "1:1",
-        },
-    )
-
-    assert response.status_code == 200
-    data = response.json()
-    assert "images" in data
 
 
 @pytest.mark.anyio

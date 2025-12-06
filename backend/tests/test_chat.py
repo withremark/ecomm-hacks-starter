@@ -30,8 +30,7 @@ async def test_list_chat_models_includes_expected_models(client):
     model_ids = [m["id"] for m in data["models"]]
 
     # Verify expected models are present
-    assert "gemini-2.0-flash" in model_ids
-    assert "gemini-2.5-flash" in model_ids
+    assert "gemini-3-pro-preview" in model_ids
 
 
 @pytest.mark.anyio

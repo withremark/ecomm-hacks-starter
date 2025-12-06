@@ -15,7 +15,7 @@ class MediaQueryRequest(BaseModel):
 
     prompt: str = Field(..., description="Text prompt/instruction")
     files: list[MediaFile] = Field(default_factory=list, description="List of media files")
-    model: str | None = Field(None, description="Model to use (defaults to gemini-2.5-flash)")
+    model: str | None = Field(None, description="Model to use (defaults to gemini-3-pro-preview)")
     response_modalities: list[str] | None = Field(None, description="Response types: ['TEXT'] or ['TEXT', 'IMAGE']")
     system_prompt: str | None = Field(None, description="System instructions")
 

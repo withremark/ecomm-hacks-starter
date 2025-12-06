@@ -21,7 +21,10 @@ router = APIRouter(prefix="/api/image", tags=["image"])
 
 def get_gemini_service(request: Request) -> GeminiService:
     """Dependency to get Gemini service from app state."""
-    return request.app.state.gemini_service
+    service = request.app.state.gemini_service
+    if not service:
+        raise HTTPException(status_code=503, detail="Gemini service not initialized")
+    return service
 
 
 @router.post("/generate", response_model=ImageResponse)
@@ -29,7 +32,7 @@ async def generate_image(
     request: ImageGenerateRequest,
     gemini: Annotated[GeminiService, Depends(get_gemini_service)],
 ):
-    """Generate images using Nano Banana (Gemini 2.0 Flash Exp).
+    """Generate images using Nano Banana (Gemini 3 Pro Image).
 
     Send a text prompt and receive generated images.
     Images are returned as base64-encoded data.
@@ -37,8 +40,7 @@ async def generate_image(
     try:
         result = await gemini.generate_image(
             prompt=request.prompt,
-            model=request.model or "gemini-2.5-flash-image",
-            aspect_ratio=request.aspect_ratio,
+            model=request.model or "gemini-3-pro-image-preview",
         )
 
         return ImageResponse(
@@ -71,7 +73,7 @@ async def edit_image(
             prompt=request.prompt,
             image_data=image_data,
             image_mime_type=request.mime_type,
-            model=request.model or "gemini-2.5-flash-image",
+            model=request.model or "gemini-3-pro-image-preview",
         )
 
         return ImageResponse(
@@ -92,20 +94,10 @@ async def list_image_models():
     return {
         "models": [
             {
-                "id": "gemini-2.5-flash-image",
-                "alias": "nano-banana",
-                "description": "Gemini 2.5 Flash Image (Nano Banana) - State-of-the-art image generation",
-                "default": True,
-            },
-            {
                 "id": "gemini-3-pro-image-preview",
                 "alias": "nano-banana-pro",
-                "description": "Gemini 3 Pro Image (Nano Banana Pro) - Best quality (preview)",
-            },
-            {
-                "id": "gemini-2.0-flash-exp",
-                "alias": "legacy",
-                "description": "Gemini 2.0 Flash Experimental - Legacy image generation",
+                "description": "Gemini 3 Pro Image (Nano Banana Pro) - Best quality",
+                "default": True,
             },
         ]
     }

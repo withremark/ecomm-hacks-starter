@@ -385,12 +385,12 @@ class TestModelSelection:
             pytest.skip("GEMINI_API_KEY not set")
 
         response = await client.post(
-            "/api/media/query", json={"prompt": "Say hello", "files": [], "model": "gemini-2.5-flash"}
+            "/api/media/query", json={"prompt": "Say hello", "files": [], "model": "gemini-3-pro-preview"}
         )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["model"] == "gemini-2.5-flash"
+        assert data["model"] == "gemini-3-pro-preview"
 
     @pytest.mark.integration
     @pytest.mark.anyio
@@ -404,7 +404,7 @@ class TestModelSelection:
             json={
                 "prompt": "Generate a red square",
                 "files": [],
-                "model": "gemini-2.5-flash-image",
+                "model": "gemini-3-pro-image-preview",
                 "response_modalities": ["TEXT", "IMAGE"],
             },
         )

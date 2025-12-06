@@ -7,8 +7,7 @@ class ImageGenerateRequest(BaseModel):
     """Request for image generation (Nano Banana)."""
 
     prompt: str = Field(..., description="Text description of the image to generate")
-    model: str | None = Field(None, description="Model to use (nano-banana, gemini-2.0-flash-exp)")
-    aspect_ratio: str | None = Field(None, description="Aspect ratio (e.g., '1:1', '16:9', '9:16')")
+    model: str | None = Field(None, description="Model to use (defaults to gemini-3-pro-image-preview)")
 
 
 class ImageEditRequest(BaseModel):

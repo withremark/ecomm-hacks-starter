@@ -182,17 +182,13 @@ class GeminiService:
     async def generate_image(
         self,
         prompt: str,
-        model: str = "gemini-2.5-flash-image",
-        aspect_ratio: str | None = None,
-        num_images: int = 1,
+        model: str = "gemini-3-pro-image-preview",
     ) -> ImageResult:
         """Generate images using Nano Banana (Gemini image models).
 
         Args:
             prompt: Text description of the image to generate
-            model: Model to use (default: gemini-2.0-flash-exp)
-            aspect_ratio: Optional aspect ratio (e.g., "1:1", "16:9", "9:16")
-            num_images: Number of images to generate (1-4)
+            model: Model to use (default: gemini-3-pro-image-preview)
 
         Returns:
             ImageResult with generated images as base64
@@ -255,7 +251,7 @@ class GeminiService:
         prompt: str,
         image_data: bytes,
         image_mime_type: str = "image/png",
-        model: str = "gemini-2.5-flash-image",
+        model: str = "gemini-3-pro-image-preview",
     ) -> ImageResult:
         """Edit an existing image using Nano Banana.
 
@@ -465,7 +461,7 @@ class GeminiService:
 # Convenience function for quick queries
 async def query_gemini(
     prompt: str,
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-3-pro-preview",
     system_instruction: str | None = None,
 ) -> str:
     """Quick async query to Gemini.

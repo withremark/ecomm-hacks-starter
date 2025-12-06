@@ -4,13 +4,13 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 
-logger = logging.getLogger(__name__)
-
 from app.models.canvas_config import load_defaults
 from app.models.ephemeral import OnboardRequest, OnboardResponse
-from app.services.prompt_loader import load_and_fill_prompt, format_history
+from app.services.prompt_loader import format_history, load_and_fill_prompt
 from app.services.session_store import session_store
 from app.services.xml_parser import parse_onboard_response
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["ephemeral"])
 
@@ -42,7 +42,7 @@ async def onboard(request_data: OnboardRequest, request: Request) -> OnboardResp
         # Load defaults for model selection
         defaults = load_defaults()
         onboarding_model = defaults.get("models", {}).get("onboarding", "pro")
-        gemini_model = MODEL_MAP.get(onboarding_model, "gemini-2.5-pro")
+        gemini_model = MODEL_MAP.get(onboarding_model, "gemini-3-pro-preview")
 
         # Load and fill the prompt template
         prompt = load_and_fill_prompt(

@@ -21,20 +21,6 @@ MODEL_MAP = {
     "flash-thinking": "gemini-3-pro-preview",
 }
 
-# Image generation prompt template for Nano Banana Pro
-IMAGE_GENERATION_PROMPT = """Generate an evocative, artistic image that complements this creative context:
-
-Context: {user_context}
-Canvas theme: {config_name}
-
-Create a visually striking image that captures the mood and themes. The image should be:
-- Atmospheric and emotionally resonant
-- Artistic and creative (not stock photo style)
-- Relevant to the writing context
-
-Generate the image now."""
-
-
 async def _generate_image_card(
     gemini,
     user_composition: str,
@@ -45,8 +31,9 @@ async def _generate_image_card(
     Uses actual AI image generation, not stock photo search.
     Returns base64 image data for direct display.
     """
-    # Build prompt for image generation
-    prompt = IMAGE_GENERATION_PROMPT.format(
+    # Build prompt for image generation (loaded from prompts/image_generation.md)
+    prompt = load_and_fill_prompt(
+        "image_generation",
         user_context=user_composition or "creative inspiration and artistic expression",
         config_name=config_name,
     )
@@ -104,7 +91,7 @@ async def generate(request_data: GenerateRequest, request: Request) -> GenerateR
 
         # Get model
         gen_model = request_data.config.models.generation
-        gemini_model = MODEL_MAP.get(gen_model, "gemini-2.5-flash")
+        gemini_model = MODEL_MAP.get(gen_model, "gemini-3-pro-preview")
 
         # Handle image card generation - always uses Nano Banana Pro
         if request_data.image_card:
