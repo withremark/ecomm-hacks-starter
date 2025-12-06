@@ -12,6 +12,24 @@ from google.genai import types
 logger = logging.getLogger(__name__)
 
 
+def _detect_image_mime_type(data: bytes) -> str:
+    """Detect actual image MIME type from magic bytes.
+
+    Gemini sometimes returns incorrect MIME types (e.g., JPEG labeled as PNG).
+    This function checks the actual bytes to determine the real format.
+    """
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        return "image/png"
+    elif data[:2] == b'\xff\xd8':
+        return "image/jpeg"
+    elif data[:4] == b'RIFF' and len(data) > 12 and data[8:12] == b'WEBP':
+        return "image/webp"
+    elif data[:6] in (b'GIF87a', b'GIF89a'):
+        return "image/gif"
+    # Default to what Gemini claims if we can't detect
+    return "image/png"
+
+
 @dataclass
 class GeminiResult:
     """Gemini response with metadata."""
@@ -208,10 +226,12 @@ class GeminiService:
                         if hasattr(part, "inline_data") and part.inline_data:
                             inline = part.inline_data
                             if hasattr(inline, "data") and inline.data:
+                                # Detect actual MIME type from bytes (Gemini often lies about format)
+                                actual_mime = _detect_image_mime_type(inline.data)
                                 images.append(
                                     {
                                         "data": base64.b64encode(inline.data).decode("utf-8"),
-                                        "mime_type": getattr(inline, "mime_type", "image/png"),
+                                        "mime_type": actual_mime,
                                     }
                                 )
 
@@ -284,10 +304,11 @@ class GeminiService:
                         if hasattr(part, "inline_data") and part.inline_data:
                             inline = part.inline_data
                             if hasattr(inline, "data") and inline.data:
+                                actual_mime = _detect_image_mime_type(inline.data)
                                 images.append(
                                     {
                                         "data": base64.b64encode(inline.data).decode("utf-8"),
-                                        "mime_type": getattr(inline, "mime_type", "image/png"),
+                                        "mime_type": actual_mime,
                                     }
                                 )
 
@@ -375,10 +396,11 @@ class GeminiService:
                         if hasattr(part, "inline_data") and part.inline_data:
                             inline = part.inline_data
                             if hasattr(inline, "data") and inline.data:
+                                actual_mime = _detect_image_mime_type(inline.data)
                                 images.append(
                                     {
                                         "data": base64.b64encode(inline.data).decode("utf-8"),
-                                        "mime_type": getattr(inline, "mime_type", "image/png"),
+                                        "mime_type": actual_mime,
                                     }
                                 )
 

@@ -46,7 +46,7 @@
   "spawning": {
     "intervalSeconds": 12,
     "minCards": 4,
-    "imageWeight": 0.0
+    "imageWeight": 1.0
   },
   "writingPane": {
     "title": "Your Space",

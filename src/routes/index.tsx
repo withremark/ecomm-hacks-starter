@@ -3,6 +3,7 @@
  *
  * URL patterns:
  * - / → OnboardingFlow (create/select config)
+ * - /prototype → Paris Drafting Table (product placement testing)
  * - /:configSlug → NewSessionRoute (prompts for name, creates session)
  * - /:configSlug/:sessionSlug → CanvasRoute (loads and renders canvas)
  * - * → NotFound
@@ -13,11 +14,16 @@ import OnboardingFlow from '@/components/OnboardingFlow'
 import { NewSessionRoute } from './NewSessionRoute'
 import { CanvasRoute } from './CanvasRoute'
 import { NotFound } from './NotFound'
+import DraftingTable from '@/prototypes/paris-drafting-table/DraftingTable'
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <OnboardingFlow />,
+  },
+  {
+    path: '/prototype',
+    element: <DraftingTable />,
   },
   {
     path: '/:configSlug',

@@ -1,10 +1,7 @@
-"""Generate router - Create new content cards."""
+"""Generate router - Create new content cards using Nano Banana Pro for images."""
 
 import json
 import logging
-import re
-import urllib.parse
-import urllib.request
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -24,190 +21,72 @@ MODEL_MAP = {
     "flash-thinking": "gemini-3-pro-preview",
 }
 
-# Wikimedia API constants
-WIKIMEDIA_API = "https://commons.wikimedia.org/w/api.php"
-USER_AGENT = "EphemeralCanvas/1.0"
+# Image generation prompt template for Nano Banana Pro
+IMAGE_GENERATION_PROMPT = """Generate an evocative, artistic image that complements this creative context:
 
+Context: {user_context}
+Canvas theme: {config_name}
 
-def _search_wikimedia_sync(query_text: str, count: int = 5) -> list[dict]:
-    """Synchronous Wikimedia search."""
-    # Step 1: Search for files
-    search_params = {
-        "action": "query",
-        "list": "search",
-        "srsearch": query_text,
-        "srnamespace": "6",  # File namespace
-        "srlimit": str(count * 3),
-        "format": "json",
-    }
-    search_url = f"{WIKIMEDIA_API}?{urllib.parse.urlencode(search_params)}"
+Create a visually striking image that captures the mood and themes. The image should be:
+- Atmospheric and emotionally resonant
+- Artistic and creative (not stock photo style)
+- Relevant to the writing context
 
-    req = urllib.request.Request(search_url)
-    req.add_header("User-Agent", USER_AGENT)
-
-    with urllib.request.urlopen(req, timeout=10) as response:
-        search_data = json.loads(response.read().decode())
-
-    results = search_data.get("query", {}).get("search", [])
-    if not results:
-        return []
-
-    # Step 2: Get image URLs for those titles
-    titles = "|".join([r["title"] for r in results])
-    info_params = {
-        "action": "query",
-        "titles": titles,
-        "prop": "imageinfo",
-        "iiprop": "url|size|mime|extmetadata",
-        "iiurlwidth": "800",
-        "format": "json",
-    }
-    info_url = f"{WIKIMEDIA_API}?{urllib.parse.urlencode(info_params)}"
-
-    req = urllib.request.Request(info_url)
-    req.add_header("User-Agent", USER_AGENT)
-
-    with urllib.request.urlopen(req, timeout=10) as response:
-        info_data = json.loads(response.read().decode())
-
-    # Parse results - filter for actual images only
-    images = []
-    pages = info_data.get("query", {}).get("pages", {})
-    allowed_mimes = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"}
-
-    for page_data in pages.values():
-        if "imageinfo" not in page_data:
-            continue
-        info = page_data["imageinfo"][0]
-
-        # Skip non-image files
-        mime = info.get("mime", "")
-        if mime not in allowed_mimes:
-            continue
-
-        extmeta = info.get("extmetadata", {})
-
-        desc = extmeta.get("ImageDescription", {}).get("value", "")
-        if desc:
-            desc = re.sub(r"<[^>]+>", "", desc)[:200]
-
-        artist = extmeta.get("Artist", {}).get("value", "")
-        if artist:
-            artist = re.sub(r"<[^>]+>", "", artist)
-
-        license_info = extmeta.get("LicenseShortName", {}).get("value", "")
-
-        images.append({
-            "url": info.get("url", ""),
-            "thumbnail": info.get("thumburl", info.get("url", "")),
-            "title": page_data.get("title", "").replace("File:", ""),
-            "description": desc,
-            "attribution": artist,
-            "license": license_info,
-        })
-
-        if len(images) >= count:
-            break
-
-    return images[:count]
-
-
-# Image card prompt template
-IMAGE_CARD_PROMPT = """You are generating an image card that complements the user's writing context.
-
-## Context
-
-User is writing about: {user_context}
-Canvas: {config_name}
-
-## Task
-
-Based on the context above, suggest a search query for finding a relevant image on Wikimedia Commons.
-Then, I will provide you with search results. Choose the best one and output a card.
-
-Your output should be:
-1. First, suggest a search query inside <search_query> tags
-2. After seeing results, output the final card
-
-<search_query>your search terms here</search_query>
-"""
-
-IMAGE_CARD_SELECTION_PROMPT = """Based on these Wikimedia search results:
-
-{search_results}
-
-Choose the most evocative and relevant image for the context: {user_context}
-
-Output a single image card in this JSON format inside <card> tags:
-<card>{{"image_url": "full URL from results", "thumbnail": "thumbnail URL", "caption": "evocative caption you write", "attribution": "artist, license from results"}}</card>
-"""
+Generate the image now."""
 
 
 async def _generate_image_card(
     gemini,
     user_composition: str,
     config_name: str,
-    model: str
 ) -> dict:
-    """Generate an image card with Wikimedia search.
+    """Generate an image card using Nano Banana Pro (gemini-3-pro-image-preview).
 
-    First asks LLM for search query, then does search, then asks for selection.
+    Uses actual AI image generation, not stock photo search.
+    Returns base64 image data for direct display.
     """
-    # Step 1: Get search query from LLM
-    query_prompt = IMAGE_CARD_PROMPT.format(
-        user_context=user_composition or "general creative content",
+    # Build prompt for image generation
+    prompt = IMAGE_GENERATION_PROMPT.format(
+        user_context=user_composition or "creative inspiration and artistic expression",
         config_name=config_name,
     )
 
-    result = await gemini.query(query_prompt, model=model)
+    logger.info(f"Generating image with Nano Banana Pro. Context: {user_composition[:100] if user_composition else 'none'}...")
 
-    # Extract search query
-    search_query = "nature landscape"  # fallback
-    if "<search_query>" in result.text:
-        start = result.text.find("<search_query>") + len("<search_query>")
-        end = result.text.find("</search_query>")
-        if end > start:
-            search_query = result.text[start:end].strip()
-
-    # Step 2: Do Wikimedia search
-    images = _search_wikimedia_sync(search_query, count=5)
-
-    if not images:
-        # Try a broader fallback search
-        images = _search_wikimedia_sync("nature landscape", count=3)
-        if not images:
-            raise ValueError("Could not find any images")
-
-    # Step 3: Ask LLM to select best image
-    search_results = "\n".join([
-        f"{i+1}. {img['title']}\n   URL: {img['url']}\n   Thumbnail: {img['thumbnail']}\n   Attribution: {img.get('attribution', 'Unknown')}, {img.get('license', 'CC BY-SA')}"
-        for i, img in enumerate(images)
-    ])
-
-    selection_prompt = IMAGE_CARD_SELECTION_PROMPT.format(
-        search_results=search_results,
-        user_context=user_composition or "general creative content",
+    # Generate image using Nano Banana Pro (gemini-3-pro-image-preview)
+    # This uses response_modalities=["TEXT", "IMAGE"] to get actual AI-generated images
+    result = await gemini.generate_image(
+        prompt=prompt,
+        model="gemini-3-pro-image-preview",  # Explicitly use Nano Banana Pro
     )
 
-    selection_result = await gemini.query(selection_prompt, model=model)
-    card = parse_card_response(selection_result.text)
+    logger.info(f"Image generation result: text={bool(result.text)}, images={len(result.images)}")
 
-    # Validate we got the required fields
-    if not card.get("image_url"):
-        # Use first result as fallback
-        img = images[0]
-        return {
-            "image_url": img["url"],
-            "thumbnail": img["thumbnail"],
-            "caption": "A moment of reflection",
-            "attribution": f"{img.get('attribution', 'Wikimedia Commons')}, {img.get('license', 'CC BY-SA')}",
-        }
+    if not result.images:
+        logger.warning("No images generated by Nano Banana Pro")
+        raise ValueError("Image generation failed - no images returned")
+
+    # Get the first generated image
+    img = result.images[0]
+    base64_data = img["data"]
+    mime_type = img.get("mime_type", "image/png")
+
+    # Create data URL for direct embedding
+    data_url = f"data:{mime_type};base64,{base64_data}"
+
+    # Generate a caption from the text response if available
+    caption = result.text if result.text else "AI-generated image"
+    if len(caption) > 100:
+        caption = caption[:97] + "..."
+
+    logger.info(f"Image generated successfully. MIME: {mime_type}, caption: {caption[:50]}...")
 
     return {
-        "image_url": card["image_url"],
-        "thumbnail": card.get("thumbnail", card["image_url"]),
-        "caption": card.get("caption", ""),
-        "attribution": card.get("attribution", "Wikimedia Commons, CC BY-SA"),
+        "image_url": data_url,
+        "thumbnail": data_url,  # Same as main for AI-generated
+        "caption": caption,
+        "attribution": "Generated by Nano Banana Pro (Gemini)",
+        "is_ai_generated": True,
     }
 
 
@@ -227,13 +106,12 @@ async def generate(request_data: GenerateRequest, request: Request) -> GenerateR
         gen_model = request_data.config.models.generation
         gemini_model = MODEL_MAP.get(gen_model, "gemini-2.5-flash")
 
-        # Handle image card generation separately
+        # Handle image card generation - always uses Nano Banana Pro
         if request_data.image_card:
             card = await _generate_image_card(
                 gemini,
                 request_data.user_composition,
                 request_data.config.name,
-                gemini_model,
             )
             return GenerateResponse(card=card, cost_usd=None, usage=None)
 

@@ -365,7 +365,7 @@ export default function ConfigSidebar({
                       </span>
                     </div>
                     <p className="config-hint">
-                      Probability of generating an image card (from Wikimedia)
+                      Probability of AI-generated image cards (Nano Banana Pro)
                     </p>
                   </div>
                 </div>
