@@ -144,7 +144,9 @@ class CanvasConfig(BaseModel):
 
 # === CARD DATA ===
 
-CardData = dict[str, Optional[str]]
+# CardData allows any value type (str, bool, etc.) for flexibility
+# e.g., is_ai_generated: bool for image cards
+CardData = dict[str, Any]
 
 
 class Card(BaseModel):
