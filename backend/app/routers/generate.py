@@ -5,6 +5,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 
+from app.config import get_model
 from app.models.canvas_config import validate_card_or_raise
 from app.models.ephemeral import GenerateRequest, GenerateResponse
 from app.services.prompt_loader import load_and_fill_prompt
@@ -13,13 +14,6 @@ from app.services.xml_parser import parse_card_response
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["ephemeral"])
-
-# Model mapping - using latest Gemini 3 Pro models
-MODEL_MAP = {
-    "pro": "gemini-3-pro-preview",
-    "flash": "gemini-3-pro-preview",  # Use pro for everything
-    "flash-thinking": "gemini-3-pro-preview",
-}
 
 async def _generate_image_card(
     gemini,
@@ -91,7 +85,7 @@ async def generate(request_data: GenerateRequest, request: Request) -> GenerateR
 
         # Get model
         gen_model = request_data.config.models.generation
-        gemini_model = MODEL_MAP.get(gen_model, "gemini-3-pro-preview")
+        gemini_model = get_model(gen_model)
 
         # Handle image card generation - always uses Nano Banana Pro
         if request_data.image_card:

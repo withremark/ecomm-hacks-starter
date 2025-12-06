@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 
+from app.config import get_model
 from app.models.canvas_config import load_defaults
 from app.models.ephemeral import StyleRequest, StyleResponse
 from app.services.prompt_loader import format_history, load_and_fill_prompt
@@ -13,13 +14,6 @@ from app.services.xml_parser import parse_style_response
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["ephemeral"])
-
-# Model mapping - using latest Gemini 3 Pro models
-MODEL_MAP = {
-    "pro": "gemini-3-pro-preview",
-    "flash": "gemini-3-pro-preview",  # Use pro for everything
-    "flash-thinking": "gemini-3-pro-preview",
-}
 
 
 def _theme_to_string(theme: dict) -> str:
@@ -51,7 +45,7 @@ async def style_chat(request_data: StyleRequest, request: Request) -> StyleRespo
         # Load defaults for model selection
         defaults = load_defaults()
         chat_model = defaults.get("models", {}).get("chat", "flash")
-        gemini_model = MODEL_MAP.get(chat_model, "gemini-3-pro-preview")
+        gemini_model = get_model(chat_model)
 
         # Format current config for the prompt
         card_theme_str = _theme_to_string(request_data.current_card_theme.model_dump())

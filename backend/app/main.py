@@ -2,14 +2,17 @@
 
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.routers import chat, image, media, onboard, generate, style, images
+from app.config import get_cors_origins, get_server_host, get_server_port
+from app.routers import chat, generate, image, images, media, onboard, style
 from app.services.gemini import GeminiService
 
 # Load environment variables
@@ -22,6 +25,34 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """Middleware to log all HTTP requests and responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        method = request.method
+        path = request.url.path
+        query = str(request.query_params) if request.query_params else ""
+
+        # Log request
+        logger.info(f"[HTTP] --> {method} {path}{f'?{query}' if query else ''}")
+
+        try:
+            response = await call_next(request)
+            elapsed = time.time() - start_time
+
+            # Log response with appropriate level based on status code
+            status = response.status_code
+            level = logging.INFO if status < 400 else logging.WARNING if status < 500 else logging.ERROR
+            logger.log(level, f"[HTTP] <-- {method} {path} {status} ({elapsed:.2f}s)")
+
+            return response
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"[HTTP] <-- {method} {path} ERROR ({elapsed:.2f}s): {type(e).__name__}: {e}")
+            raise
 
 
 @asynccontextmanager
@@ -44,7 +75,9 @@ async def lifespan(app: FastAPI):
         # Create a placeholder service that will error on use
         app.state.gemini_service = None
 
-    logger.info("Gemini backend ready at http://localhost:8000")
+    host = get_server_host()
+    port = get_server_port()
+    logger.info(f"Gemini backend ready at http://{host}:{port}")
 
     yield
 
@@ -58,17 +91,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# Request logging middleware (added first, runs last)
+app.add_middleware(RequestLoggingMiddleware)
+
+# CORS middleware - origins configurable via CORS_ORIGINS env var
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4173",
-        "http://localhost:4174",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:3000",
-    ],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -122,4 +151,4 @@ async def health():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=get_server_host(), port=get_server_port())
