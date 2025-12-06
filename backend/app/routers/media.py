@@ -60,7 +60,7 @@ async def multimedia_query(
 
     except Exception as e:
         logger.error(f"Multi-media query error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail=f"Multi-media query error: {str(e)}")
 
 
 @router.get("/supported-types")

@@ -52,7 +52,7 @@ async def generate_image(
 
     except Exception as e:
         logger.error(f"Image generation error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail=f"Image generation error: {str(e)}")
 
 
 @router.post("/edit", response_model=ImageResponse)
@@ -85,7 +85,7 @@ async def edit_image(
 
     except Exception as e:
         logger.error(f"Image editing error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail=f"Image editing error: {str(e)}")
 
 
 @router.get("/models")

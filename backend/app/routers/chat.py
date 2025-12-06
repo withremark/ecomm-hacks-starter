@@ -57,7 +57,7 @@ async def chat_completions(
 
     except Exception as e:
         logger.error(f"Chat completion error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail=f"Chat completion error: {str(e)}")
 
 
 @router.post("/query", response_model=SimpleQueryResponse)
@@ -85,7 +85,7 @@ async def simple_query(
 
     except Exception as e:
         logger.error(f"Query error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail=f"Query error: {str(e)}")
 
 
 @router.get("/models")
