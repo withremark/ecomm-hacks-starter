@@ -64,8 +64,8 @@ class MediaResult:
 class GeminiService:
     """Service for interacting with Google Gemini API."""
 
-    # Image model - using Gemini 3 Pro Image
-    DEFAULT_IMAGE_MODEL = "gemini-3-pro-image-preview"
+    # Image model - using Nano Banana (Gemini 2.5 Flash Image)
+    DEFAULT_IMAGE_MODEL = "gemini-2.5-flash-image"
 
     def __init__(self, api_key: str | None = None, default_model: str = "gemini-3-pro-preview"):
         """Initialize the Gemini service.

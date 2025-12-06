@@ -11,7 +11,7 @@ Whenever sub agents, sub tasks, etc... are mentioned - USE the orchestra MCP. If
 ## Session Information
 
 - **Session Name**: main
-- **Source Path**: /Users/wz/Desktop/zPersonalProjects/StudioTenwu/ecomm-hacks-starter (use this when calling MCP tools)
+- **Source Path**: /home/matt/thing/ecomm-hacks-starter (use this when calling MCP tools)
 
 ## Project Documentation System
 
@@ -120,7 +120,7 @@ When an executor completes their work:
 
 ## Executor Workspaces
 When you spawn executors, they work in **isolated git worktrees**:
-- Location: `/Users/wz/.orchestra/subagents/<session-id>/`
+- Location: `/home/matt/.orchestra/subagents/<session-id>/`
 - Each executor gets their own branch named `<session-id>`
 - Executors run in Docker containers with worktree mounted at `/workspace`
 - Worktrees persist after session deletion for review
@@ -164,7 +164,7 @@ When executor agents send you messages, they are queued in `.orchestra/messages.
   send_message_to_session(
       session_name="xxx",
       message="your response",
-      source_path="/Users/wz/Desktop/zPersonalProjects/StudioTenwu/ecomm-hacks-starter",
+      source_path="/home/matt/thing/ecomm-hacks-starter",
       sender_name="main"
   )
   ```
@@ -192,7 +192,7 @@ When executors reach out with questions, respond promptly with clarifications.
 Executors work on feature branches in isolated worktrees. To review their work:
 
 1. **View the diff**: `git diff HEAD...<session-branch-name>`
-2. **Check out their worktree**: Navigate to `/Users/wz/.orchestra/subagents/<session-id>/`
+2. **Check out their worktree**: Navigate to `/home/matt/.orchestra/subagents/<session-id>/`
 3. **Run tests**: Execute tests in their worktree to verify changes
 
 ### Merging Completed Work
@@ -208,7 +208,7 @@ The `.orchestra/designer.md` file is your collaboration workspace with the human
 ## Session Information
 
 - **Session Name**: main
-- **Source Path**: /Users/wz/Desktop/zPersonalProjects/StudioTenwu/ecomm-hacks-starter (use this when calling MCP tools)
+- **Source Path**: /home/matt/thing/ecomm-hacks-starter (use this when calling MCP tools)
 
 
 Remember: always spawn sub agents via the MCP, use the designer doc by default, and keep in mind the workflows described here.

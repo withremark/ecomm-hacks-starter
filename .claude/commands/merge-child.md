@@ -12,7 +12,7 @@ I'll help you merge changes from child session `$1` into your current branch.
 Let's navigate to the child worktree and check for any uncommitted or untracked files:
 
 ```bash
-cd /Users/wz/.orchestra/subagents/orchestra-$1 && git status
+cd /home/matt/.orchestra/subagents/orchestra-$1 && git status
 ```
 
 This will show:
@@ -22,8 +22,8 @@ This will show:
 
 If there are any uncommitted changes or untracked files, I'll need to commit them from within the worktree:
 1. Review what was changed
-2. Stage files: `cd /Users/wz/.orchestra/subagents/orchestra-$1 && git add <files>`
-3. Commit with message: `cd /Users/wz/.orchestra/subagents/orchestra-$1 && git commit -m "message"`
+2. Stage files: `cd /home/matt/.orchestra/subagents/orchestra-$1 && git add <files>`
+3. Commit with message: `cd /home/matt/.orchestra/subagents/orchestra-$1 && git commit -m "message"`
 
 Let me check the worktree now...
 
